@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, MapPin, Calendar, Heart, X, Check, Save } from "lucide-react";
+import { Camera, MapPin, Calendar, Heart, X, Check, Save, Sparkles } from "lucide-react";
 import Link from "next/link";
+import CreateFoodCardModal from "@/components/CreateFoodCardModal";
 
 export default function AddRestaurantPage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
 
   // Form State
   const [place, setPlace] = useState({
@@ -68,10 +70,7 @@ export default function AddRestaurantPage() {
     setTimeout(() => {
       setIsSaving(false);
       setShowCelebration(true);
-      setTimeout(() => {
-        router.push("/quests");
-      }, 2000);
-    }, 800);
+    }, 600);
   };
 
   const updateRating = (field: string, val: number) => {
@@ -100,16 +99,41 @@ export default function AddRestaurantPage() {
 
   if (showCelebration) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center font-pixel bg-mustard">
-        <div className="w-24 h-24 bg-white-city border-4 border-ink shadow-[8px_8px_0_rgba(38,52,58,1)] flex items-center justify-center animate-bounce mb-8">
-          <Heart className="w-12 h-12 fill-warm-red text-warm-red" />
+      <div className="w-full h-full flex flex-col items-center justify-center font-pixel bg-mustard p-4 text-center">
+        <div className="w-20 h-20 bg-white-city border-4 border-ink shadow-[8px_8px_0_rgba(38,52,58,1)] flex items-center justify-center animate-bounce mb-4">
+          <Heart className="w-10 h-10 fill-warm-red text-warm-red" />
         </div>
-        <h1 className="text-2xl text-ink font-black drop-shadow-[2px_2px_0_rgba(255,255,255,1)] text-center px-4">
+        <h1 className="text-xl md:text-2xl text-ink font-black drop-shadow-[2px_2px_0_rgba(255,255,255,1)] mb-2 uppercase">
           QUEST SAVED!
         </h1>
-        <p className="text-xs text-ink font-bold mt-2 bg-white-city border-2 border-ink px-4 py-2">
-          +100 COINS
+        <p className="text-[0.65rem] md:text-xs text-ink font-bold mb-6 bg-white-city border-2 border-ink px-3 py-1.5 shadow-[2px_2px_0_rgba(38,52,58,1)]">
+          {place.name.toUpperCase()} ADDED (+100 COINS)
         </p>
+
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <button
+            type="button"
+            onClick={() => setIsCardModalOpen(true)}
+            className="w-full bg-cream border-4 border-ink py-3 px-4 text-xs font-black text-ink shadow-[4px_4px_0_rgba(38,52,58,1)] active:translate-y-1 hover:brightness-105 flex items-center justify-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 text-mustard" /> + CREATE FOOD CARD
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/quests")}
+            className="w-full bg-white-city border-4 border-ink py-2.5 px-4 text-[0.65rem] font-bold text-ink shadow-[4px_4px_0_rgba(38,52,58,1)] active:translate-y-1 hover:bg-concrete"
+          >
+            VIEW IN LOGBOOK
+          </button>
+        </div>
+
+        <CreateFoodCardModal
+          isOpen={isCardModalOpen}
+          onClose={() => router.push("/cards")}
+          initialPlaceName={place.name}
+          initialCategory={place.category}
+          onCardSaved={() => router.push("/cards")}
+        />
       </div>
     );
   }

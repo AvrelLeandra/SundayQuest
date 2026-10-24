@@ -4,7 +4,9 @@
 import { useState, useEffect } from "react";
 import QuestCard from "@/components/QuestCard";
 import ActionButtons from "@/components/ActionButtons";
-import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle } from "lucide-react";
+import CreateFoodCardModal from "@/components/CreateFoodCardModal";
+import { FoodCardData, getStoredFoodCards } from "@/lib/pixelate";
+import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import realPlaces from "@/data/places.json";
 
@@ -15,6 +17,8 @@ export default function QuestsPage() {
   const [filterFavorites, setFilterFavorites] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editNotes, setEditNotes] = useState("");
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [foodCards, setFoodCards] = useState<FoodCardData[]>([]);
 
   useEffect(() => {
     try {
@@ -54,6 +58,7 @@ export default function QuestsPage() {
         });
       }
     } catch(e) {}
+    setFoodCards(getStoredFoodCards());
   }, []);
 
   const [mockPlaces, setMockPlaces] = useState(() => realPlaces.map((place, index) => {
@@ -378,7 +383,69 @@ export default function QuestsPage() {
                    </div>
                 </div>
 
-             </div>
+             
+                {/* Food Cards for this restaurant */}
+                {(() => {
+                  const placeCards = foodCards.filter(
+                    (c) => c.placeName.toLowerCase() === selectedCard.name.toLowerCase()
+                  );
+                  return (
+                    <div className="bg-white-city border-4 border-ink p-3 rounded-sm shadow-[4px_4px_0_rgba(38,52,58,1)] flex flex-col gap-2 relative mt-1 mb-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[0.6rem] font-black text-ink flex items-center gap-1.5 uppercase">
+                          <Sparkles className="w-3.5 h-3.5 text-mustard" /> FOOD CARDS ({placeCards.length})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsCardModalOpen(true)}
+                          className="bg-mustard border-2 border-ink px-2 py-1 text-[0.55rem] font-bold text-ink active:translate-y-0.5 shadow-[1px_1px_0_rgba(38,52,58,1)] flex items-center gap-1 hover:brightness-105"
+                        >
+                          <Plus className="w-3 h-3" strokeWidth={3} /> ADD FOOD CARD
+                        </button>
+                      </div>
+
+                      {placeCards.length > 0 ? (
+                        <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                          {placeCards.map((c) => (
+                            <Link
+                              key={c.id}
+                              href="/cards"
+                              className="flex items-center gap-2 bg-cream border-2 border-ink p-1.5 hover:bg-concrete transition-all shrink-0 shadow-[1px_1px_0_rgba(38,52,58,1)]"
+                            >
+                              <img
+                                src={c.imageUrl}
+                                alt={c.name}
+                                className="w-8 h-8 object-cover rounded-sm border border-ink"
+                                style={{ imageRendering: "pixelated" }}
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-[0.55rem] font-black text-ink truncate max-w-[100px]">
+                                  {c.name}
+                                </span>
+                                <span className="text-[0.45rem] text-asphalt font-bold">
+                                  {c.category} • +{c.points}
+                                </span>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-[0.5rem] text-asphalt font-bold py-1">
+                          <span>No food cards minted yet!</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsCardModalOpen(true)}
+                            className="text-brick-red underline hover:text-ink font-bold"
+                          >
+                            + Pixelate dish photo
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+              </div>
 
              <ActionButtons 
                  placeName={selectedCard.name} 
@@ -388,6 +455,17 @@ export default function QuestsPage() {
                  onEdit={() => handleEditToggle(selectedCard.id)}
                  isEditing={isEditing}
                />
+      {/* Create Food Card Modal */}
+      {selectedCard && (
+        <CreateFoodCardModal
+          isOpen={isCardModalOpen}
+          onClose={() => setIsCardModalOpen(false)}
+          initialPlaceName={selectedCard.name}
+          initialCategory={selectedCard.category}
+          onCardSaved={() => setFoodCards(getStoredFoodCards())}
+        />
+      )}
+
 
           </div>
         </div>
@@ -396,6 +474,7 @@ export default function QuestsPage() {
     </div>
   );
 }
+
 
 
 
