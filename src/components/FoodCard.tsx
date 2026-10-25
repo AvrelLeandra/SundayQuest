@@ -19,7 +19,7 @@ export default function FoodCard({ card, onClick, compact = false }: FoodCardPro
       role="button"
       tabIndex={0}
       className={`relative w-full select-none cursor-pointer transition-all duration-300 hover:-translate-y-1.5 group font-sans ${
-        compact ? "max-w-[270px]" : "max-w-[320px]"
+        compact ? "max-w-[290px]" : "max-w-[320px]"
       }`}
       style={{ filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.12))" }}
     >
@@ -50,23 +50,22 @@ export default function FoodCard({ card, onClick, compact = false }: FoodCardPro
           </span>
         </div>
 
-        {/* 2. Dish Name Banner & Stars */}
-        <div className="flex justify-between items-center gap-2 z-10 py-1">
-          {/* Dish Name Pill */}
-          <div
-            className="px-3 py-1.5 rounded-full border border-black/10 shadow-sm flex-1 truncate flex items-center"
-            style={{ backgroundColor: theme.pillBg }}
+        {/* 2. Dish Name Banner (Full Width) */}
+        <div
+          className="w-full px-3.5 py-2 rounded-2xl border border-black/10 shadow-sm flex items-center justify-center text-center z-10"
+          style={{ backgroundColor: theme.pillBg }}
+        >
+          <span
+            className="text-[0.72rem] md:text-[0.8rem] font-black uppercase tracking-wider leading-snug break-words"
+            style={{ color: theme.pillText }}
           >
-            <span
-              className="text-[0.7rem] md:text-[0.78rem] font-black uppercase tracking-wider truncate"
-              style={{ color: theme.pillText }}
-            >
-              {card.name}
-            </span>
-          </div>
+            {card.name}
+          </span>
+        </div>
 
-          {/* Star Rating */}
-          <div className="flex items-center gap-0.5 shrink-0 bg-white/40 px-2 py-1 rounded-full border border-black/5">
+        {/* 3. Star Rating (Positioned below the dish name) */}
+        <div className="flex items-center justify-center z-10">
+          <div className="flex items-center gap-1 bg-white/40 px-3 py-1 rounded-full border border-black/5 shadow-sm">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
