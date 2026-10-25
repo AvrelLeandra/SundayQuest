@@ -290,7 +290,7 @@ export default function QuestsPage() {
       {selectedCard && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-ink/80 p-2 md:p-6 animate-in fade-in">
           
-          <div className="relative w-full max-w-sm md:max-w-md h-auto max-h-[80vh] md:max-h-[70vh] bg-cream flex flex-col font-pixel border-4 border-ink shadow-[8px_8px_0_rgba(38,52,58,1)] animate-in zoom-in-95">
+          <div className="relative w-full max-w-sm md:max-w-md h-auto max-h-[85vh] md:max-h-[80vh] bg-cream flex flex-col font-pixel border-4 border-ink rounded-3xl shadow-[8px_8px_0_rgba(38,52,58,1)] overflow-hidden animate-in zoom-in-95">
              
              {/* Storefront Banner */}
              <div className="w-full h-20 md:h-24 bg-brick-red shrink-0 relative border-b-4 border-ink flex items-end">
@@ -311,7 +311,7 @@ export default function QuestsPage() {
                      </button>
                      <button 
                        onClick={() => setSelectedCard(null)}
-                       className="bg-white-city shrink-0 mb-0.5 p-1 rounded-sm border-2 border-ink text-ink flex items-center justify-center hover:bg-concrete shadow-[2px_2px_0_rgba(38,52,58,1)] active:translate-y-1 active:shadow-none transition-all"
+                       className="bg-white-city shrink-0 mb-0.5 p-1 rounded-lg border-2 border-ink text-ink flex items-center justify-center hover:bg-concrete shadow-[2px_2px_0_rgba(38,52,58,1)] active:translate-y-1 active:shadow-none transition-all"
                      >
                        <X className="w-5 h-5" strokeWidth={3} />
                      </button>
@@ -324,7 +324,7 @@ export default function QuestsPage() {
                 
                 {/* Core Info */}
                 <div className="flex gap-4">
-                   <div className="w-24 h-24 shrink-0 bg-asphalt border-4 border-ink rounded-sm shadow-[4px_4px_0_rgba(38,52,58,1)] flex items-center justify-center overflow-hidden">
+                   <div className="w-24 h-24 shrink-0 bg-asphalt border-4 border-ink rounded-xl shadow-[4px_4px_0_rgba(38,52,58,1)] flex items-center justify-center overflow-hidden">
                      {selectedCard.visits?.[0]?.photo_url ? (
                         <img src={selectedCard.visits[0].photo_url} alt="Food" className="w-full h-full object-cover pixelated" />
                      ) : (
@@ -333,7 +333,7 @@ export default function QuestsPage() {
                    </div>
                    
                    <div className="flex-1 flex flex-col justify-start">
-                      <div className="bg-light-sky border-[1.5px] border-ink px-1 py-0.5 inline-block mb-2 self-start">
+                      <div className="bg-light-sky border-[1.5px] border-ink px-1.5 py-0.5 rounded-md inline-block mb-2 self-start">
                         <span className="text-[0.5rem] font-bold text-ink">{selectedCard.category} • {selectedCard.price}</span>
                       </div>
                       <div className="text-[0.55rem] text-ink flex items-center gap-1 font-bold mb-2">
@@ -342,11 +342,11 @@ export default function QuestsPage() {
                       
                       {/* Tags */}
                         <div className="flex flex-wrap gap-2 mt-auto">
-                           <span className="bg-mustard border border-ink text-ink text-[0.5rem] font-bold px-2 py-1 rounded-sm shadow-[1px_1px_0_rgba(38,52,58,1)]">
+                           <span className="bg-mustard border border-ink text-ink text-[0.5rem] font-bold px-2 py-1 rounded-md shadow-[1px_1px_0_rgba(38,52,58,1)]">
                              VISITS: {selectedCard.visit_count || 1}
                            </span>
                          {selectedCard.tags.map((tag: string) => (
-                           <span key={tag} className="bg-white-city border border-ink text-ink text-[0.5rem] font-bold px-2 py-1 rounded-sm shadow-[1px_1px_0_rgba(38,52,58,1)]">
+                           <span key={tag} className="bg-white-city border border-ink text-ink text-[0.5rem] font-bold px-2 py-1 rounded-md shadow-[1px_1px_0_rgba(38,52,58,1)]">
                              #{tag.toUpperCase()}
                            </span>
                          ))}
@@ -355,8 +355,8 @@ export default function QuestsPage() {
                 </div>
 
                 {/* Journal Notes */}
-                <div className="bg-white-city border-4 border-ink p-4 rounded-sm shadow-[4px_4px_0_rgba(38,52,58,1)] relative mt-2 mb-4">
-                   <div className="absolute -top-3 left-2 bg-mustard text-ink text-[0.55rem] font-bold px-2 py-1 border-2 border-ink">
+                <div className="bg-white-city border-4 border-ink p-4 rounded-2xl shadow-[4px_4px_0_rgba(38,52,58,1)] relative mt-2 mb-4">
+                   <div className="absolute -top-3 left-2 bg-mustard text-ink text-[0.55rem] font-bold px-2 py-1 border-2 border-ink rounded-md">
                      FOOD TRIED & NOTES
                    </div>
                    <div className="mt-2 text-xs font-bold leading-relaxed text-ink whitespace-pre-wrap">
@@ -374,11 +374,11 @@ export default function QuestsPage() {
                    <div className="mt-4 pt-3 border-t-2 border-dashed border-ink flex items-center gap-2">
                      <span className="text-[0.6rem] font-bold text-asphalt">WOULD RETURN?</span>
                      {selectedCard.would_return === true ? (
-                       <span className="bg-leaf-green text-white-city text-[0.6rem] font-bold px-2 py-0.5 rounded-sm border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">YES</span>
+                       <span className="bg-leaf-green text-white-city text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">YES</span>
                      ) : selectedCard.would_return === false ? (
-                       <span className="bg-warm-red text-white-city text-[0.6rem] font-bold px-2 py-0.5 rounded-sm border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">NO</span>
+                       <span className="bg-warm-red text-white-city text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">NO</span>
                      ) : (
-                       <span className="bg-concrete text-ink text-[0.6rem] font-bold px-2 py-0.5 rounded-sm border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">UNDECIDED</span>
+                       <span className="bg-concrete text-ink text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">UNDECIDED</span>
                      )}
                    </div>
                 </div>
@@ -390,7 +390,7 @@ export default function QuestsPage() {
                     (c) => c.placeName.toLowerCase() === selectedCard.name.toLowerCase()
                   );
                   return (
-                    <div className="bg-white-city border-4 border-ink p-3 rounded-sm shadow-[4px_4px_0_rgba(38,52,58,1)] flex flex-col gap-2 relative mt-1 mb-2">
+                    <div className="bg-white-city border-4 border-ink p-3 rounded-2xl shadow-[4px_4px_0_rgba(38,52,58,1)] flex flex-col gap-2 relative mt-1 mb-2">
                       <div className="flex justify-between items-center">
                         <span className="text-[0.6rem] font-black text-ink flex items-center gap-1.5 uppercase">
                           <Sparkles className="w-3.5 h-3.5 text-mustard" /> FOOD CARDS ({placeCards.length})
@@ -398,7 +398,7 @@ export default function QuestsPage() {
                         <button
                           type="button"
                           onClick={() => setIsCardModalOpen(true)}
-                          className="bg-mustard border-2 border-ink px-2 py-1 text-[0.55rem] font-bold text-ink active:translate-y-0.5 shadow-[1px_1px_0_rgba(38,52,58,1)] flex items-center gap-1 hover:brightness-105"
+                          className="bg-mustard border-2 border-ink px-2 py-1 text-[0.55rem] font-bold text-ink rounded-md active:translate-y-0.5 shadow-[1px_1px_0_rgba(38,52,58,1)] flex items-center gap-1 hover:brightness-105"
                         >
                           <Plus className="w-3 h-3" strokeWidth={3} /> ADD FOOD CARD
                         </button>
