@@ -275,7 +275,7 @@ export default function CreateFoodCardModal({
             <Sparkles className="w-3.5 h-3.5 text-mustard" /> LIVE CARD PREVIEW
           </div>
 
-          <div className="w-full max-w-[340px]">
+          <div className="w-full max-w-[360px]">
             <FoodCard card={previewCard} compact={true} />
           </div>
 

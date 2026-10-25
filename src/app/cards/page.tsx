@@ -101,7 +101,7 @@ export default function CardsPage() {
       {/* Cards Grid Area */}
       <div className="flex-1 overflow-y-auto px-4 pb-12 pt-2 custom-scrollbar z-10">
         {filteredCards.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-5 justify-items-center">
             {filteredCards.map((card) => (
               <FoodCard
                 key={card.id}
