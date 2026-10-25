@@ -120,16 +120,6 @@ export default function FoodCard({ card, onClick, compact = false }: FoodCardPro
             {card.placeName} {card.neighborhood ? `• ${card.neighborhood}` : ""}
           </span>
         </div>
-
-        {/* 5. Footer Accents */}
-        <div className="flex justify-center items-center gap-1 pt-1.5 text-center z-10">
-          <span
-            className="text-[0.5rem] md:text-[0.55rem] font-mono font-bold tracking-wider uppercase opacity-85"
-            style={{ color: theme.footerColor }}
-          >
-            \ \ \ {card.footerText || "works best on the weekends"} / / /
-          </span>
-        </div>
       </div>
     </div>
   );

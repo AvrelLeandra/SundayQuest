@@ -24,7 +24,6 @@ export default function CreateFoodCardModal({
   const [placeName, setPlaceName] = useState(initialPlaceName);
   const [category, setCategory] = useState(initialCategory.toUpperCase());
   const [rating, setRating] = useState(5);
-  const [footerText, setFooterText] = useState("works best on the weekends");
   const [colorTheme, setColorTheme] = useState<string>("coral");
 
   // Image & Pixelation states
@@ -94,7 +93,6 @@ export default function CreateFoodCardModal({
       category: category.toUpperCase() || "FOOD",
       points: getPointsForCategory(category),
       rating,
-      footerText: footerText.trim(),
       colorTheme,
       imageUrl: pixelatedImageSrc || rawImageSrc || "/food_ticket.jpg",
       createdAt: new Date().toISOString().split("T")[0],
@@ -127,7 +125,6 @@ export default function CreateFoodCardModal({
     category: category || "DESSERT",
     points: getPointsForCategory(category),
     rating,
-    footerText,
     colorTheme,
     imageUrl: pixelatedImageSrc || rawImageSrc || "",
     createdAt: "TODAY",
