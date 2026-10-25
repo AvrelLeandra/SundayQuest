@@ -130,7 +130,7 @@ export default function CardsPage() {
       {/* Card Detail / Inspector Modal */}
       {selectedCard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4 font-pixel animate-in fade-in">
-          <div className="relative flex flex-col items-center max-w-sm w-full animate-in zoom-in-95">
+          <div className="relative flex flex-col items-center max-w-[280px] w-full animate-in zoom-in-95">
             {/* Close Button at top */}
             <div className="w-full flex justify-end mb-2">
               <button
