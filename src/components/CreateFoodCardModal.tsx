@@ -90,7 +90,7 @@ export default function CreateFoodCardModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-2 md:p-6 font-pixel overflow-y-auto animate-in fade-in">
-      <div className="relative w-full max-w-3xl bg-cream border-4 border-ink shadow-[10px_10px_0_rgba(38,52,58,1)] flex flex-col md:flex-row max-h-[95vh] overflow-hidden rounded-sm my-auto">
+      <div className="relative w-full max-w-4xl bg-cream border-4 border-ink shadow-[10px_10px_0_rgba(38,52,58,1)] flex flex-col md:flex-row max-h-[95vh] overflow-hidden rounded-sm my-auto">
         
         {/* Top Header on Mobile */}
         <div className="md:hidden bg-mustard border-b-4 border-ink p-3 flex justify-between items-center shrink-0">
@@ -275,7 +275,7 @@ export default function CreateFoodCardModal({
             <Sparkles className="w-3.5 h-3.5 text-mustard" /> LIVE CARD PREVIEW
           </div>
 
-          <div className="w-full max-w-[290px]">
+          <div className="w-full max-w-[340px]">
             <FoodCard card={previewCard} compact={true} />
           </div>
 
