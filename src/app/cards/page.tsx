@@ -62,9 +62,9 @@ export default function CardsPage() {
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="bg-mustard border-4 border-ink shadow-[4px_4px_0_rgba(38,52,58,1)] text-ink px-3 py-2 text-[0.65rem] md:text-xs font-bold active:translate-y-1 active:shadow-none flex items-center gap-1.5 hover:brightness-105 transition-all"
+            className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1 hover:brightness-105 transition-all"
           >
-            <Plus className="w-4 h-4" strokeWidth={3} /> NEW FOOD CARD
+            <Plus className="w-3 h-3" strokeWidth={2.5} /> NEW FOOD CARD
           </button>
         </div>
 
@@ -101,7 +101,7 @@ export default function CardsPage() {
       {/* Cards Grid Area */}
       <div className="flex-1 overflow-y-auto px-4 pb-12 pt-2 custom-scrollbar z-10">
         {filteredCards.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 justify-items-center">
             {filteredCards.map((card) => (
               <FoodCard
                 key={card.id}

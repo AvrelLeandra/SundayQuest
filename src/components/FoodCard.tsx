@@ -19,7 +19,7 @@ export default function FoodCard({ card, onClick, compact = false }: FoodCardPro
       role="button"
       tabIndex={0}
       className={`relative w-full select-none cursor-pointer transition-all duration-300 hover:-translate-y-1.5 group font-sans ${
-        compact ? "max-w-[240px]" : "max-w-[270px]"
+        compact ? "max-w-[270px]" : "max-w-[310px]"
       }`}
       style={{ filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.12))" }}
     >
@@ -35,15 +35,15 @@ export default function FoodCard({ card, onClick, compact = false }: FoodCardPro
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/20 pointer-events-none rounded-[20px]"></div>
 
         {/* 1. Header Row: Category & Power Points */}
-        <div className="flex justify-between items-center px-1 mb-2 z-10">
+        <div className="flex justify-between items-center px-1 mb-2 z-10 gap-2">
           <span
-            className="text-[0.75rem] md:text-[0.85rem] font-black tracking-widest uppercase font-pixel"
+            className="text-[0.52rem] md:text-[0.6rem] font-bold tracking-wider uppercase font-pixel truncate"
             style={{ color: theme.headerText }}
           >
             {card.category || "FOOD"}
           </span>
           <span
-            className="text-[0.75rem] md:text-[0.85rem] font-black tracking-wider font-pixel"
+            className="text-[0.52rem] md:text-[0.6rem] font-bold tracking-wider font-pixel shrink-0"
             style={{ color: theme.headerText }}
           >
             + {card.points || 750}
@@ -104,35 +104,21 @@ export default function FoodCard({ card, onClick, compact = false }: FoodCardPro
           </div>
         </div>
 
-        {/* 4. Description & Place Story Box */}
+        {/* 4. Place Box */}
         <div
-          className="rounded-xl p-2 border shadow-sm flex flex-col justify-between gap-1.5 z-10"
+          className="rounded-xl px-2.5 py-1.5 border shadow-sm flex items-center gap-1.5 z-10"
           style={{
             backgroundColor: theme.contentBg,
             borderColor: theme.contentBorder,
           }}
         >
-          {/* Power Text */}
-          <p
-            className="text-[0.62rem] md:text-[0.68rem] leading-snug font-medium line-clamp-2"
-            style={{ color: theme.textColor }}
+          <MapPin className="w-3 h-3 shrink-0" style={{ color: theme.headerText }} />
+          <span
+            className="text-[0.6rem] md:text-[0.65rem] font-bold truncate uppercase tracking-tight"
+            style={{ color: theme.headerText }}
           >
-            {card.power.startsWith("power:") ? card.power : `power: ${card.power}`}
-          </p>
-
-          {/* Place Tag */}
-          <div
-            className="flex items-center gap-1 pt-1 border-t border-dashed"
-            style={{ borderColor: theme.contentBorder }}
-          >
-            <MapPin className="w-2.5 h-2.5 shrink-0" style={{ color: theme.headerText }} />
-            <span
-              className="text-[0.55rem] md:text-[0.6rem] font-bold truncate uppercase tracking-tight"
-              style={{ color: theme.headerText }}
-            >
-              Found at: {card.placeName} {card.neighborhood ? `• ${card.neighborhood}` : ""}
-            </span>
-          </div>
+            {card.placeName} {card.neighborhood ? `• ${card.neighborhood}` : ""}
+          </span>
         </div>
 
         {/* 5. Footer Accents */}

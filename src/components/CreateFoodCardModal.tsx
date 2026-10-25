@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { X, Upload, Sparkles, RefreshCw, Star, MapPin, Check, Sliders } from "lucide-react";
-import { FoodCardData, CARD_THEMES, FUN_POWERS, pixelateImage, saveFoodCard } from "@/lib/pixelate";
+import { FoodCardData, CARD_THEMES, pixelateImage, saveFoodCard, getPointsForCategory } from "@/lib/pixelate";
 import FoodCard from "@/components/FoodCard";
 
 interface CreateFoodCardModalProps {
@@ -24,8 +24,6 @@ export default function CreateFoodCardModal({
   const [placeName, setPlaceName] = useState(initialPlaceName);
   const [category, setCategory] = useState(initialCategory.toUpperCase());
   const [rating, setRating] = useState(5);
-  const [points, setPoints] = useState(750);
-  const [power, setPower] = useState(FUN_POWERS[0]);
   const [footerText, setFooterText] = useState("works best on the weekends");
   const [colorTheme, setColorTheme] = useState<string>("coral");
 
@@ -47,9 +45,6 @@ export default function CreateFoodCardModal({
       const themeKeys = Object.keys(CARD_THEMES);
       const randomTheme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
       setColorTheme(randomTheme);
-      // Pick random power
-      const randomPower = FUN_POWERS[Math.floor(Math.random() * FUN_POWERS.length)];
-      setPower(randomPower);
     }
   }, [isOpen, initialPlaceName, initialCategory]);
 
@@ -83,12 +78,6 @@ export default function CreateFoodCardModal({
     reader.readAsDataURL(file);
   };
 
-  const handleRandomizePower = () => {
-    const filtered = FUN_POWERS.filter((p) => p !== power);
-    const nextPower = filtered[Math.floor(Math.random() * filtered.length)];
-    setPower(nextPower);
-  };
-
   const handleRandomizeTheme = () => {
     const themeKeys = Object.keys(CARD_THEMES);
     const nextTheme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
@@ -103,9 +92,8 @@ export default function CreateFoodCardModal({
       name: foodName.toUpperCase(),
       placeName: placeName.trim() || "Sunday Quest Log",
       category: category.toUpperCase() || "FOOD",
-      points: points || 750,
+      points: getPointsForCategory(category),
       rating,
-      power: power.trim(),
       footerText: footerText.trim(),
       colorTheme,
       imageUrl: pixelatedImageSrc || rawImageSrc || "/food_ticket.jpg",
@@ -137,9 +125,8 @@ export default function CreateFoodCardModal({
     name: foodName || "FOOD NAME",
     placeName: placeName || "RESTAURANT NAME",
     category: category || "DESSERT",
-    points,
+    points: getPointsForCategory(category),
     rating,
-    power: power || "power: ...",
     footerText,
     colorTheme,
     imageUrl: pixelatedImageSrc || rawImageSrc || "",
@@ -257,42 +244,39 @@ export default function CreateFoodCardModal({
             </div>
           </div>
 
-          {/* 3. Category & Points & Rating */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* 3. Category & Rating (Points are automatic based on food type) */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[0.5rem] font-bold text-asphalt block mb-1">
-                CATEGORY
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-[0.55rem] font-bold text-asphalt">
+                  FOOD TYPE
+                </label>
+                <span className="text-[0.55rem] font-black text-brick-red">
+                  +{getPointsForCategory(category)} PTS
+                </span>
+              </div>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full bg-white-city border-2 border-ink p-2 text-[0.65rem] font-bold text-ink outline-none cursor-pointer"
               >
-                <option value="DESSERT">DESSERT</option>
-                <option value="MAIN">MAIN</option>
-                <option value="CAFE">CAFE</option>
-                <option value="SNACK">SNACK</option>
-                <option value="PIZZA">PIZZA</option>
-                <option value="RAMEN">RAMEN</option>
-                <option value="DRINK">DRINK</option>
-                <option value="BAKERY">BAKERY</option>
+                <option value="DESSERT">DESSERT (+750)</option>
+                <option value="MAIN">MAIN (+850)</option>
+                <option value="PIZZA">PIZZA (+800)</option>
+                <option value="RAMEN">RAMEN (+800)</option>
+                <option value="BURGER">BURGER (+750)</option>
+                <option value="CAFE">CAFE (+600)</option>
+                <option value="BAKERY">BAKERY (+650)</option>
+                <option value="SNACK">SNACK (+500)</option>
+                <option value="DRINK">DRINK (+450)</option>
+                <option value="ITALIAN">ITALIAN (+850)</option>
+                <option value="JAPANESE">JAPANESE (+850)</option>
+                <option value="INDIAN">INDIAN (+850)</option>
               </select>
             </div>
 
             <div>
-              <label className="text-[0.5rem] font-bold text-asphalt block mb-1">
-                EXP POINTS
-              </label>
-              <input
-                type="number"
-                value={points}
-                onChange={(e) => setPoints(Number(e.target.value))}
-                className="w-full bg-white-city border-2 border-ink p-2 text-xs font-bold text-ink outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[0.5rem] font-bold text-asphalt block mb-1">
+              <label className="text-[0.55rem] font-bold text-asphalt block mb-1">
                 RATING
               </label>
               <div className="flex items-center gap-1 bg-white-city border-2 border-ink p-1.5 h-[38px] justify-center">
@@ -343,29 +327,6 @@ export default function CreateFoodCardModal({
                 />
               ))}
             </div>
-          </div>
-
-          {/* 5. Power Description */}
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-[0.55rem] font-bold text-asphalt">
-                FOOD POWER / STORY
-              </label>
-              <button
-                type="button"
-                onClick={handleRandomizePower}
-                className="text-[0.55rem] text-leaf-green font-bold underline flex items-center gap-1 hover:text-ink"
-              >
-                🎲 Randomize Power
-              </button>
-            </div>
-            <textarea
-              rows={2}
-              value={power}
-              onChange={(e) => setPower(e.target.value)}
-              className="w-full bg-white-city border-2 border-ink p-2 text-xs font-medium text-ink outline-none leading-relaxed"
-              placeholder="e.g. grants +100 cozy energy and cures all Monday blues..."
-            />
           </div>
 
           {/* Action Buttons */}

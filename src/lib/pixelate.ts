@@ -6,7 +6,7 @@ export interface FoodCardData {
   category: string;
   points: number;
   rating: number;
-  power: string;
+  power?: string;
   footerText?: string;
   colorTheme: string;
   imageUrl: string;
@@ -141,14 +141,28 @@ export const CARD_THEMES: Record<string, {
   }
 };
 
-export const FUN_POWERS = [
-  "grants +100 cozy energy and permanently cures all Monday blues.",
-  "so deliciously rich it stops time for a few magical bites.",
-  "infinite comfort in a single plate. Warning: may cause sudden happy naps.",
-  "boosts mood by +750 and leaves a lingering sense of pure satisfaction.",
-  "crispy on the outside, cloud-soft on the inside, cooked to perfection.",
-  "the ultimate comfort companion for lazy Sunday afternoon quests."
-];
+export const CATEGORY_POINTS: Record<string, number> = {
+  DESSERT: 750,
+  MAIN: 850,
+  PIZZA: 800,
+  RAMEN: 800,
+  CAFE: 600,
+  BAKERY: 650,
+  SNACK: 500,
+  DRINK: 450,
+  BURGER: 750,
+  ITALIAN: 850,
+  JAPANESE: 850,
+  INDIAN: 850,
+  RESTAURANT: 800,
+  "BAR & GRILL": 750,
+};
+
+export function getPointsForCategory(cat: string): number {
+  if (!cat) return 700;
+  const upper = cat.trim().toUpperCase();
+  return CATEGORY_POINTS[upper] || 700;
+}
 
 /**
  * Converts any image DataURL into genuine pixel art using HTML5 canvas
