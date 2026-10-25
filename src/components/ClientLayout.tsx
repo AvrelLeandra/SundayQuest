@@ -26,7 +26,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <div className="hidden md:flex w-full h-full mx-auto p-4 md:p-6 gap-6 items-center justify-center">
         
         {/* Left Navigation Rail */}
-        <div className="w-32 lg:w-56 h-full shrink-0">
+        <div className="w-48 lg:w-56 h-full shrink-0">
           <Navigation />
         </div>
 
