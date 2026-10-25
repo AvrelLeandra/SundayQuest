@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import QuestCard from "@/components/QuestCard";
 import ActionButtons from "@/components/ActionButtons";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
-import { FoodCardData, getStoredFoodCards } from "@/lib/pixelate";
+import { FoodCardData, getStoredFoodCards, getCategoryIcon } from "@/lib/pixelate";
 import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import realPlaces from "@/data/places.json";
@@ -412,8 +412,14 @@ export default function QuestsPage() {
                               href="/cards"
                               className="flex items-center gap-2 bg-cream border-2 border-ink p-1.5 hover:bg-concrete transition-all shrink-0 shadow-[1px_1px_0_rgba(38,52,58,1)]"
                             >
-                              <div className="w-7 h-7 rounded-full border-2 border-ink bg-mustard flex items-center justify-center shrink-0 shadow-[1px_1px_0_rgba(38,52,58,1)]">
-                                <Sparkles className="w-3.5 h-3.5 text-ink" />
+                              <div className="w-7 h-7 rounded-full border-2 border-ink bg-white-city flex items-center justify-center shrink-0 shadow-[1px_1px_0_rgba(38,52,58,1)] overflow-hidden p-0.5">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={getCategoryIcon(c.category)}
+                                  alt={c.category}
+                                  className="w-full h-full object-contain"
+                                  style={{ imageRendering: "pixelated" }}
+                                />
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-[0.55rem] font-black text-ink truncate max-w-[100px]">

@@ -164,6 +164,29 @@ export function getPointsForCategory(cat: string): number {
   return CATEGORY_POINTS[upper] || 700;
 }
 
+export const FOOD_CATEGORY_ICONS: Record<string, string> = {
+  DESSERT: "/food_icons/dessert.png",
+  MAIN: "/food_icons/main.png",
+  PIZZA: "/food_icons/pizza.png",
+  RAMEN: "/food_icons/ramen.png",
+  CAFE: "/food_icons/cafe.png",
+  BAKERY: "/food_icons/bakery.png",
+  SNACK: "/food_icons/snack.png",
+  DRINK: "/food_icons/drink.png",
+  BURGER: "/food_icons/burger.png",
+  ITALIAN: "/food_icons/italian.png",
+  JAPANESE: "/food_icons/japanese.png",
+  INDIAN: "/food_icons/indian.png",
+  RESTAURANT: "/food_icons/main.png",
+  "BAR & GRILL": "/food_icons/burger.png",
+};
+
+export function getCategoryIcon(cat: string): string {
+  if (!cat) return "/food_icons/snack.png";
+  const upper = cat.trim().toUpperCase();
+  return FOOD_CATEGORY_ICONS[upper] || "/food_icons/snack.png";
+}
+
 /**
  * Converts any image DataURL into genuine pixel art using HTML5 canvas
  * with nearest-neighbor scaling.
@@ -238,30 +261,38 @@ export function pixelateImage(imageSrc: string, resolution: number = 48): Promis
 export const DEFAULT_FOOD_CARDS: FoodCardData[] = [
   {
     id: "card_default_1",
+    name: "SHOYU RAMEN",
+    placeName: "Daily Sushi",
+    neighborhood: "Indiranagar",
+    category: "RAMEN",
+    points: 800,
+    rating: 4,
+    colorTheme: "matcha",
+    imageUrl: "/food_icons/ramen.png",
+    createdAt: "2026-10-25"
+  },
+  {
+    id: "card_default_2",
     name: "DEATH BY CHOCOLATE",
     placeName: "Corner House",
     neighborhood: "Residency Road",
     category: "DESSERT",
     points: 750,
     rating: 5,
-    power: "power: dark chocolate cake drenched in thick hot fudge and roasted nuts. Gives +100 joy!",
-    footerText: "works best on the weekends",
     colorTheme: "coral",
-    imageUrl: "/food_ticket.jpg",
+    imageUrl: "/food_icons/dessert.png",
     createdAt: "2026-09-20"
   },
   {
-    id: "card_default_2",
+    id: "card_default_3",
     name: "TRUFFLE SOURDOUGH PIZZA",
     placeName: "Brik Oven",
     neighborhood: "Indiranagar",
-    category: "MAIN",
-    points: 820,
+    category: "PIZZA",
+    points: 800,
     rating: 5,
-    power: "power: leopard-spotted wood-fired crust with molten fresh mozzarella and wild mushrooms.",
-    footerText: "best shared with player two",
-    colorTheme: "sage",
-    imageUrl: "/ramen_bg.jpg",
+    colorTheme: "peach",
+    imageUrl: "/food_icons/pizza.png",
     createdAt: "2026-09-27"
   }
 ];

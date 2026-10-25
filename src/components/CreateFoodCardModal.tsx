@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Sparkles, RefreshCw, Star, MapPin, Check } from "lucide-react";
-import { FoodCardData, CARD_THEMES, saveFoodCard, getPointsForCategory } from "@/lib/pixelate";
+import { FoodCardData, CARD_THEMES, saveFoodCard, getPointsForCategory, getCategoryIcon } from "@/lib/pixelate";
 import FoodCard from "@/components/FoodCard";
 
 interface CreateFoodCardModalProps {
@@ -55,7 +55,7 @@ export default function CreateFoodCardModal({
       points: getPointsForCategory(category),
       rating,
       colorTheme,
-      imageUrl: "",
+      imageUrl: getCategoryIcon(category),
       createdAt: new Date().toISOString().split("T")[0],
     };
 
@@ -84,7 +84,7 @@ export default function CreateFoodCardModal({
     points: getPointsForCategory(category),
     rating,
     colorTheme,
-    imageUrl: "",
+    imageUrl: getCategoryIcon(category),
     createdAt: "TODAY",
   };
 
@@ -156,24 +156,35 @@ export default function CreateFoodCardModal({
                   +{getPointsForCategory(category)} PTS
                 </span>
               </div>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-white-city border-2 border-ink p-2 text-[0.65rem] font-bold text-ink outline-none cursor-pointer"
-              >
-                <option value="DESSERT">DESSERT (+750)</option>
-                <option value="MAIN">MAIN (+850)</option>
-                <option value="PIZZA">PIZZA (+800)</option>
-                <option value="RAMEN">RAMEN (+800)</option>
-                <option value="BURGER">BURGER (+750)</option>
-                <option value="CAFE">CAFE (+600)</option>
-                <option value="BAKERY">BAKERY (+650)</option>
-                <option value="SNACK">SNACK (+500)</option>
-                <option value="DRINK">DRINK (+450)</option>
-                <option value="ITALIAN">ITALIAN (+850)</option>
-                <option value="JAPANESE">JAPANESE (+850)</option>
-                <option value="INDIAN">INDIAN (+850)</option>
-              </select>
+              <div className="flex items-center gap-1.5">
+                <div className="w-9 h-9 shrink-0 bg-white-city border-2 border-ink flex items-center justify-center p-0.5 shadow-[1px_1px_0_rgba(38,52,58,1)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={getCategoryIcon(category)}
+                    alt={category}
+                    className="w-full h-full object-contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </div>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="flex-1 min-w-0 bg-white-city border-2 border-ink p-2 text-[0.6rem] font-bold text-ink outline-none cursor-pointer"
+                >
+                  <option value="RAMEN">RAMEN (+800)</option>
+                  <option value="BURGER">BURGER (+750)</option>
+                  <option value="PIZZA">PIZZA (+800)</option>
+                  <option value="DESSERT">DESSERT (+750)</option>
+                  <option value="CAFE">CAFE (+600)</option>
+                  <option value="BAKERY">BAKERY (+650)</option>
+                  <option value="SNACK">SNACK (+500)</option>
+                  <option value="DRINK">DRINK (+450)</option>
+                  <option value="ITALIAN">ITALIAN (+850)</option>
+                  <option value="JAPANESE">JAPANESE (+850)</option>
+                  <option value="INDIAN">INDIAN (+850)</option>
+                  <option value="MAIN">MAIN (+850)</option>
+                </select>
+              </div>
             </div>
 
             <div>
