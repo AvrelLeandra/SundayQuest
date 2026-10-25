@@ -148,20 +148,10 @@ export default function CardsPage() {
             <div className="w-full bg-cream border-4 border-ink p-3 shadow-[6px_6px_0_rgba(38,52,58,1)] flex gap-2 mt-4 rounded-sm">
               <button
                 onClick={() => handleDelete(selectedCard.id)}
-                className="flex-1 bg-warm-red text-white-city border-2 border-ink py-2 text-[0.6rem] font-bold flex items-center justify-center gap-1.5 active:translate-y-0.5 shadow-[2px_2px_0_rgba(38,52,58,1)]"
+                className="w-full bg-warm-red text-white-city border-2 border-ink py-2 text-[0.6rem] font-bold flex items-center justify-center gap-1.5 active:translate-y-0.5 shadow-[2px_2px_0_rgba(38,52,58,1)] hover:brightness-110"
               >
-                <Trash2 className="w-3.5 h-3.5" /> DELETE
+                <Trash2 className="w-3.5 h-3.5" /> DELETE CARD
               </button>
-
-              {selectedCard.imageUrl && (
-                <a
-                  href={selectedCard.imageUrl}
-                  download={`${selectedCard.name.toLowerCase().replace(/\s+/g, "_")}_pixel.png`}
-                  className="flex-1 bg-leaf-green text-white-city border-2 border-ink py-2 text-[0.6rem] font-bold flex items-center justify-center gap-1.5 active:translate-y-0.5 shadow-[2px_2px_0_rgba(38,52,58,1)]"
-                >
-                  <Download className="w-3.5 h-3.5" /> SAVE PIC
-                </a>
-              )}
             </div>
           </div>
         </div>

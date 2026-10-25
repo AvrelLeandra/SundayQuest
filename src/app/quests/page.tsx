@@ -412,12 +412,9 @@ export default function QuestsPage() {
                               href="/cards"
                               className="flex items-center gap-2 bg-cream border-2 border-ink p-1.5 hover:bg-concrete transition-all shrink-0 shadow-[1px_1px_0_rgba(38,52,58,1)]"
                             >
-                              <img
-                                src={c.imageUrl}
-                                alt={c.name}
-                                className="w-8 h-8 object-cover rounded-sm border border-ink"
-                                style={{ imageRendering: "pixelated" }}
-                              />
+                              <div className="w-7 h-7 rounded-full border-2 border-ink bg-mustard flex items-center justify-center shrink-0 shadow-[1px_1px_0_rgba(38,52,58,1)]">
+                                <Sparkles className="w-3.5 h-3.5 text-ink" />
+                              </div>
                               <div className="flex flex-col">
                                 <span className="text-[0.55rem] font-black text-ink truncate max-w-[100px]">
                                   {c.name}
