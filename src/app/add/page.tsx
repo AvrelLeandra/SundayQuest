@@ -39,15 +39,21 @@ export default function AddRestaurantPage() {
     let lat = 12.9716;
     let lng = 77.5946;
     try {
-      const q = encodeURIComponent(`${place.name} ${place.neighborhood || ""} Bangalore, India`);
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${q}&key=${apiKey}`);
-      const data = await res.json();
-      if (data && data.results && data.results.length > 0) {
-        lat = data.results[0].geometry.location.lat;
-        lng = data.results[0].geometry.location.lng;
+      const params = new URLSearchParams({
+        name: place.name.trim(),
+        neighborhood: (place.neighborhood || "").trim(),
+      });
+      const res = await fetch(`/api/geocode?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && typeof data.lat === "number" && typeof data.lng === "number") {
+          lat = data.lat;
+          lng = data.lng;
+        }
       }
-    } catch(e) {}
+    } catch (e) {
+      console.warn("Geocoding failed, using fallback:", e);
+    }
     
     const newQuest = {
       id: "local_" + Date.now(),

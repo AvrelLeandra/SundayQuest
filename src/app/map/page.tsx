@@ -75,6 +75,22 @@ export default function MapPage() {
     });
   });
 
+  const handleUpdatePlacePosition = (placeId: string, newLat: number, newLng: number) => {
+    setMockPlaces((prev) =>
+      prev.map((p) => (p.id === placeId ? { ...p, lat: newLat, lng: newLng } : p))
+    );
+    setSelectedPlace((prev: any) =>
+      prev && prev.id === placeId ? { ...prev, lat: newLat, lng: newLng } : prev
+    );
+    try {
+      const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
+      const updated = saved.map((p: any) =>
+        p.id === placeId ? { ...p, lat: newLat, lng: newLng } : p
+      );
+      localStorage.setItem("sq_custom_quests", JSON.stringify(updated));
+    } catch (e) {}
+  };
+
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
@@ -87,16 +103,41 @@ export default function MapPage() {
           lng: place.lng,
           score: (place.rating || 8.0).toFixed(1),
           category: place.category,
-          favorite: place.favorite
+          favorite: place.favorite,
         }));
-        
+
         setMockPlaces((prev) => {
-          const existingIds = new Set(prev.map(p => p.id));
+          const existingIds = new Set(prev.map((p) => p.id));
           const toAdd = formattedSaved.filter((p: any) => !existingIds.has(p.id));
           return [...toAdd, ...prev];
         });
+
+        // Auto-fix any custom quest that got stuck at default coordinates (12.9716, 77.5946)
+        saved.forEach(async (p: any) => {
+          const isStuckAtDefault =
+            Math.abs(p.lat - 12.9716) < 0.0005 && Math.abs(p.lng - 77.5946) < 0.0005;
+          if (isStuckAtDefault && (p.name || p.neighborhood)) {
+            try {
+              const res = await fetch(
+                `/api/geocode?name=${encodeURIComponent(p.name)}&neighborhood=${encodeURIComponent(
+                  p.neighborhood || ""
+                )}`
+              );
+              if (res.ok) {
+                const geo = await res.json();
+                if (
+                  geo.lat &&
+                  geo.lng &&
+                  (Math.abs(geo.lat - 12.9716) >= 0.0005 || Math.abs(geo.lng - 77.5946) >= 0.0005)
+                ) {
+                  handleUpdatePlacePosition(p.id, geo.lat, geo.lng);
+                }
+              }
+            } catch (err) {}
+          }
+        });
       }
-    } catch(e) {}
+    } catch (e) {}
   }, []);
 
   const placesWithDistance = useMemo(() => {
@@ -214,6 +255,12 @@ export default function MapPage() {
               <Marker
                 key={place.id}
                 position={{ lat: place.lat, lng: place.lng }}
+                draggable={Boolean(place.id && String(place.id).startsWith("local_"))}
+                onDragEnd={(e) => {
+                  if (e.latLng && place.id && String(place.id).startsWith("local_")) {
+                    handleUpdatePlacePosition(place.id, e.latLng.lat(), e.latLng.lng());
+                  }
+                }}
                 onClick={() => setSelectedPlace(place)}
                 icon={{
                   path: google.maps.SymbolPath.CIRCLE,
@@ -282,6 +329,11 @@ export default function MapPage() {
                        </Link>
                      </div>
                      
+                     {Boolean(selectedPlace?.id && String(selectedPlace.id).startsWith("local_")) && (
+                       <div className="w-full text-[0.38rem] text-leaf-green font-bold text-center mb-1 leading-tight">
+                         ✦ Drag pin to adjust
+                       </div>
+                     )}
                      {/* Fake Barcode */}
                      <div className="w-full h-5 flex justify-center items-end gap-[1px] opacity-90 mt-1">
                        {[2,1,3,1,2,2,4,1,1,2,3,1,2,1,1,4,2,1,3,1,1,2].map((w, i) => (
