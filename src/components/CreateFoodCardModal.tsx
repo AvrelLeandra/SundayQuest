@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Sparkles, RefreshCw, Star, MapPin, Check } from "lucide-react";
-import { FoodCardData, CARD_THEMES, saveFoodCard, getPointsForCategory, getCategoryIcon } from "@/lib/pixelate";
+import { FoodCardData, CARD_THEMES, saveFoodCard, getPointsForCategory, getCategoryIcon, FOOD_CATEGORIES } from "@/lib/pixelate";
 import FoodCard from "@/components/FoodCard";
 
 interface CreateFoodCardModalProps {
@@ -171,18 +171,11 @@ export default function CreateFoodCardModal({
                   onChange={(e) => setCategory(e.target.value)}
                   className="flex-1 min-w-0 bg-white-city border-2 border-ink p-2 text-[0.6rem] font-bold text-ink outline-none cursor-pointer"
                 >
-                  <option value="RAMEN">RAMEN (+800)</option>
-                  <option value="BURGER">BURGER (+750)</option>
-                  <option value="PIZZA">PIZZA (+800)</option>
-                  <option value="DESSERT">DESSERT (+750)</option>
-                  <option value="CAFE">CAFE (+600)</option>
-                  <option value="BAKERY">BAKERY (+650)</option>
-                  <option value="SNACK">SNACK (+500)</option>
-                  <option value="DRINK">DRINK (+450)</option>
-                  <option value="ITALIAN">ITALIAN (+850)</option>
-                  <option value="JAPANESE">JAPANESE (+850)</option>
-                  <option value="INDIAN">INDIAN (+850)</option>
-                  <option value="MAIN">MAIN (+850)</option>
+                  {FOOD_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label} (+{cat.points})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

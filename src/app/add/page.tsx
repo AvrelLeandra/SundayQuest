@@ -216,12 +216,20 @@ export default function AddRestaurantPage() {
                 >
                   <option value="Restaurant">Restaurant</option>
                   <option value="Cafe">Cafe</option>
+                  <option value="Bakery">Bakery</option>
                   <option value="Dessert">Dessert</option>
+                  <option value="Ice Cream">Ice Cream</option>
+                  <option value="Pizza">Pizza</option>
+                  <option value="Burger">Burger</option>
+                  <option value="Ramen">Ramen</option>
                   <option value="Bar & Grill">Bar & Grill</option>
                   <option value="Italian">Italian</option>
                   <option value="Japanese">Japanese</option>
-                  <option value="Pan-Asian">Pan-Asian</option>
+                  <option value="Mexican">Mexican</option>
                   <option value="Indian">Indian</option>
+                  <option value="Starter">Starter</option>
+                  <option value="Snack">Snack</option>
+                  <option value="Drink">Drink</option>
                 </select>
              </div>
            </div>

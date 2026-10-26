@@ -146,22 +146,28 @@ export const CATEGORY_POINTS: Record<string, number> = {
   MAIN: 850,
   PIZZA: 800,
   RAMEN: 800,
+  BURGER: 750,
   CAFE: 600,
   BAKERY: 650,
   SNACK: 500,
   DRINK: 450,
-  BURGER: 750,
   ITALIAN: 850,
   JAPANESE: 850,
   INDIAN: 850,
+  STARTER: 650,
+  "ICE CREAM": 600,
+  ICE_CREAM: 600,
+  MEXICAN: 800,
   RESTAURANT: 800,
   "BAR & GRILL": 750,
 };
 
 export function getPointsForCategory(cat: string): number {
   if (!cat) return 700;
-  const upper = cat.trim().toUpperCase();
-  return CATEGORY_POINTS[upper] || 700;
+  const rawUpper = cat.trim().toUpperCase();
+  const underscore = rawUpper.replace(/[\s-]+/g, "_");
+  const space = rawUpper.replace(/[_]+/g, " ");
+  return CATEGORY_POINTS[rawUpper] || CATEGORY_POINTS[space] || CATEGORY_POINTS[underscore] || 700;
 }
 
 export const FOOD_CATEGORY_ICONS: Record<string, string> = {
@@ -169,23 +175,47 @@ export const FOOD_CATEGORY_ICONS: Record<string, string> = {
   MAIN: "/food_icons/main.png",
   PIZZA: "/food_icons/pizza.png",
   RAMEN: "/food_icons/ramen.png",
+  BURGER: "/food_icons/burger.png",
   CAFE: "/food_icons/cafe.png",
   BAKERY: "/food_icons/bakery.png",
   SNACK: "/food_icons/snack.png",
   DRINK: "/food_icons/drink.png",
-  BURGER: "/food_icons/burger.png",
   ITALIAN: "/food_icons/italian.png",
   JAPANESE: "/food_icons/japanese.png",
   INDIAN: "/food_icons/indian.png",
+  STARTER: "/food_icons/starter.png",
+  "ICE CREAM": "/food_icons/ice_cream.png",
+  ICE_CREAM: "/food_icons/ice_cream.png",
+  MEXICAN: "/food_icons/mexican.png",
   RESTAURANT: "/food_icons/main.png",
   "BAR & GRILL": "/food_icons/burger.png",
 };
 
 export function getCategoryIcon(cat: string): string {
   if (!cat) return "/food_icons/snack.png";
-  const upper = cat.trim().toUpperCase();
-  return FOOD_CATEGORY_ICONS[upper] || "/food_icons/snack.png";
+  const rawUpper = cat.trim().toUpperCase();
+  const underscore = rawUpper.replace(/[\s-]+/g, "_");
+  const space = rawUpper.replace(/[_]+/g, " ");
+  return FOOD_CATEGORY_ICONS[rawUpper] || FOOD_CATEGORY_ICONS[space] || FOOD_CATEGORY_ICONS[underscore] || "/food_icons/snack.png";
 }
+
+export const FOOD_CATEGORIES = [
+  { value: "RAMEN", label: "RAMEN", points: 800 },
+  { value: "BURGER", label: "BURGER", points: 750 },
+  { value: "PIZZA", label: "PIZZA", points: 800 },
+  { value: "DESSERT", label: "DESSERT", points: 750 },
+  { value: "ICE CREAM", label: "ICE CREAM", points: 600 },
+  { value: "CAFE", label: "CAFE", points: 600 },
+  { value: "BAKERY", label: "BAKERY", points: 650 },
+  { value: "STARTER", label: "STARTER", points: 650 },
+  { value: "SNACK", label: "SNACK", points: 500 },
+  { value: "DRINK", label: "DRINK", points: 450 },
+  { value: "ITALIAN", label: "ITALIAN", points: 850 },
+  { value: "JAPANESE", label: "JAPANESE", points: 850 },
+  { value: "INDIAN", label: "INDIAN", points: 850 },
+  { value: "MEXICAN", label: "MEXICAN", points: 800 },
+  { value: "MAIN", label: "MAIN", points: 850 },
+] as const;
 
 /**
  * Converts any image DataURL into genuine pixel art using HTML5 canvas
