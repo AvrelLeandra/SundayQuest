@@ -220,13 +220,15 @@ export default function QuestsPage() {
       {/* Header Area */}
       <div className="m-4 mb-2 flex flex-col gap-3 shrink-0 z-10">
          <div className="flex justify-between items-end">
-            <h1 
-  className="text-xl md:text-2xl font-black text-white-city tracking-widest uppercase flex items-center gap-2 drop-shadow-[2px_2px_0_rgba(38,52,58,1)]"
-  
->
-  <img src="/logbook_icon.png" alt="Logbook Icon" className="w-6 h-6 md:w-8 md:h-8 object-contain" style={{ imageRendering: "pixelated" }} /> LOGBOOK
-</h1>
-            <Link href="/add" className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1">
+            <div>
+              <h1 className="text-xl md:text-2xl font-black text-white-city tracking-widest uppercase flex items-center gap-2 drop-shadow-[2px_2px_0_rgba(38,52,58,1)]">
+                <img src="/logbook_icon.png" alt="Logbook Icon" className="w-6 h-6 md:w-8 md:h-8 object-contain" style={{ imageRendering: "pixelated" }} /> LOGBOOK
+              </h1>
+              <p className="text-[0.6rem] text-white-city font-bold tracking-wider mt-0.5 opacity-90 drop-shadow-sm uppercase">
+                LOGGED: {mockPlaces.length} {mockPlaces.length === 1 ? "QUEST" : "QUESTS"}
+              </p>
+            </div>
+            <Link href="/add" className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1 hover:brightness-105 transition-all">
               <Plus className="w-3 h-3" /> NEW QUEST
             </Link>
          </div>
