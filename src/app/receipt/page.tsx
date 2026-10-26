@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { Store, Sun, Flame, Heart, CakeSlice, CupSoda } from "lucide-react";
 import realPlaces from "@/data/places.json";
+import { getStoredFoodCards } from "@/lib/pixelate";
 
 export default function ReceiptPage() {
   const [stats, setStats] = useState({
-    places: 50,
+    places: 0,
     foods: 0,
-    sundays: 52,
-    streak: 5
+    sundays: 0,
+    streak: 0
   });
 
   useEffect(() => {
@@ -26,11 +27,16 @@ export default function ReceiptPage() {
         }
       });
 
+      let cardsCount = 0;
+      try {
+        cardsCount = getStoredFoodCards().length;
+      } catch (err) {}
+
       setStats({
         places: realPlaces.length + saved.length,
-        foods: foodCount,
-        sundays: 52 + saved.length,
-        streak: 5 + (saved.length > 0 ? 1 : 0)
+        foods: foodCount + cardsCount,
+        sundays: saved.length,
+        streak: saved.length > 0 ? 1 : 0
       });
     } catch (e) {}
   }, []);

@@ -331,7 +331,8 @@ export default function MapPage() {
               )}
               
               <div className="flex flex-col gap-2">
-                 {placesWithDistance.slice(0, 20).map((place: any) => (
+                 {placesWithDistance.length > 0 ? (
+                   placesWithDistance.slice(0, 20).map((place: any) => (
                    <div key={place.id} className="bg-white-city border-2 border-ink p-2 flex justify-between items-center hover:bg-light-sky">
                       <div className="flex flex-col flex-1 min-w-0 pr-2">
                         <span className="text-[0.65rem] font-bold text-ink truncate">{place.name}</span>
@@ -352,11 +353,20 @@ export default function MapPage() {
                         {place.distanceKm !== undefined ? `${place.distanceKm.toFixed(1)} km` : "? km"}
                       </span>
                    </div>
-                 ))}
-              </div>
-           </div>
-        </div>
-      )}
+                ))
+              ) : (
+                   <div className="bg-white-city border-2 border-ink p-4 text-center my-2">
+                     <p className="text-[0.65rem] font-bold text-ink mb-1">NO QUESTS ON MAP</p>
+                     <p className="text-[0.55rem] text-asphalt font-bold mb-3">Add locations with coordinates to see nearby spots!</p>
+                     <Link href="/add" className="inline-block bg-mustard border-2 border-ink px-3 py-1 text-[0.6rem] font-bold text-ink shadow-[2px_2px_0_rgba(38,52,58,1)] active:translate-y-0.5">
+                       + ADD NEW QUEST
+                     </Link>
+                   </div>
+                 )}
+               </div>
+            </div>
+         </div>
+       )}
 
     </div>
   );

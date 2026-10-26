@@ -258,44 +258,7 @@ export function pixelateImage(imageSrc: string, resolution: number = 48): Promis
 /**
  * Default starter cards to make the collection lively on first load
  */
-export const DEFAULT_FOOD_CARDS: FoodCardData[] = [
-  {
-    id: "card_default_1",
-    name: "SHOYU RAMEN",
-    placeName: "Daily Sushi",
-    neighborhood: "Indiranagar",
-    category: "RAMEN",
-    points: 800,
-    rating: 4,
-    colorTheme: "matcha",
-    imageUrl: "/food_icons/ramen.png",
-    createdAt: "2026-10-25"
-  },
-  {
-    id: "card_default_2",
-    name: "DEATH BY CHOCOLATE",
-    placeName: "Corner House",
-    neighborhood: "Residency Road",
-    category: "DESSERT",
-    points: 750,
-    rating: 5,
-    colorTheme: "coral",
-    imageUrl: "/food_icons/dessert.png",
-    createdAt: "2026-09-20"
-  },
-  {
-    id: "card_default_3",
-    name: "TRUFFLE SOURDOUGH PIZZA",
-    placeName: "Brik Oven",
-    neighborhood: "Indiranagar",
-    category: "PIZZA",
-    points: 800,
-    rating: 5,
-    colorTheme: "peach",
-    imageUrl: "/food_icons/pizza.png",
-    createdAt: "2026-09-27"
-  }
-];
+export const DEFAULT_FOOD_CARDS: FoodCardData[] = [];
 
 export function getStoredFoodCards(): FoodCardData[] {
   if (typeof window === "undefined") return DEFAULT_FOOD_CARDS;
@@ -306,7 +269,8 @@ export function getStoredFoodCards(): FoodCardData[] {
       return DEFAULT_FOOD_CARDS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : DEFAULT_FOOD_CARDS;
+    if (!Array.isArray(parsed)) return DEFAULT_FOOD_CARDS;
+    return parsed.filter((c: FoodCardData) => !c.id.startsWith("card_default_"));
   } catch (e) {
     return DEFAULT_FOOD_CARDS;
   }

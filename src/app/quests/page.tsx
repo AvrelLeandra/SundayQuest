@@ -61,7 +61,7 @@ export default function QuestsPage() {
     setFoodCards(getStoredFoodCards());
   }, []);
 
-  const [mockPlaces, setMockPlaces] = useState(() => realPlaces.map((place, index) => {
+  const [mockPlaces, setMockPlaces] = useState<any[]>(() => (realPlaces as any[]).map((place: any, index: number) => {
     let baseScore = place.rating;
     if (baseScore <= 5) {
       baseScore = baseScore * 2;
@@ -278,13 +278,23 @@ export default function QuestsPage() {
                   />
               ))
             ) : (
-              <div className="col-span-full h-32 flex flex-col items-center justify-center text-ink/50 border-4 border-dashed border-ink/20">
-                <Search className="w-8 h-8 mb-2 opacity-50" />
-                <p className="font-bold text-[0.7rem] uppercase tracking-widest">No Quests Found</p>
+              <div className="col-span-full py-8 flex flex-col items-center justify-center text-ink bg-white-city/90 border-4 border-ink p-6 rounded-xl shadow-[4px_4px_0_rgba(38,52,58,1)] text-center">
+                <Search className="w-8 h-8 mb-2 text-asphalt/60" />
+                <p className="font-black text-xs md:text-sm uppercase tracking-wider mb-1">
+                  {mockPlaces.length === 0 ? "NO QUESTS LOGGED YET" : "NO MATCHING QUESTS"}
+                </p>
+                <p className="font-bold text-[0.6rem] text-asphalt mb-4">
+                  {mockPlaces.length === 0 ? "Start your Sunday quest journey by adding your first spot!" : "Try adjusting your search or filters."}
+                </p>
+                {mockPlaces.length === 0 && (
+                  <Link href="/add" className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-4 py-2 text-[0.65rem] font-black active:translate-y-1 active:shadow-none flex items-center gap-1.5 hover:bg-[#F3D160]">
+                    <Plus className="w-3.5 h-3.5" /> ADD FIRST QUEST
+                  </Link>
+                )}
               </div>
             )}
-         </div>
-      </div>
+          </div>
+       </div>
 
       {/* Detail Modal Overlay (Restored Old Layout, popup style) */}
       {selectedCard && (

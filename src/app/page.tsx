@@ -52,10 +52,23 @@ export default function Home() {
                   <div className="absolute top-[120%] left-0 bg-cream border-[0.25cqw] border-ink p-[0.8cqw] shadow-[0.4cqw_0.4cqw_0_rgba(38,52,58,1)] flex flex-col z-50">
                     <button 
                       onClick={() => {
+                        if (confirm("Reset and clear all saved custom quests & food cards?")) {
+                          localStorage.removeItem("sq_custom_quests");
+                          localStorage.removeItem("sq_food_cards");
+                          alert("All saved data cleared!");
+                          window.location.reload();
+                        }
+                      }}
+                      className="text-[1.8cqw] md:text-[1cqw] text-warm-red font-bold whitespace-nowrap hover:bg-concrete px-[2cqw] py-[1cqw] active:translate-y-[0.1cqw] border-b border-ink/20 text-left"
+                    >
+                      CLEAR ALL DATA
+                    </button>
+                    <button 
+                      onClick={() => {
                         sessionStorage.removeItem("sq_auth");
                         router.push("/login");
                       }}
-                      className="text-[1.8cqw] md:text-[1cqw] text-ink font-bold whitespace-nowrap hover:bg-concrete px-[2cqw] py-[1cqw] active:translate-y-[0.1cqw]"
+                      className="text-[1.8cqw] md:text-[1cqw] text-ink font-bold whitespace-nowrap hover:bg-concrete px-[2cqw] py-[1cqw] active:translate-y-[0.1cqw] text-left"
                     >
                       LOG OUT
                     </button>
