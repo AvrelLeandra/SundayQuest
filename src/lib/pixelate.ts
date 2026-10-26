@@ -306,12 +306,48 @@ export function getStoredFoodCards(): FoodCardData[] {
   }
 }
 
+export function isPlaceMatch(cardPlace?: string, questName?: string): boolean {
+  if (!cardPlace || !questName) return false;
+
+  const norm = (str: string) =>
+    str
+      .toLowerCase()
+      .trim()
+      .replace(/\bst\b/g, "street")
+      .replace(/\brd\b/g, "road")
+      .replace(/[^a-z0-9]/g, "");
+
+  const c = norm(cardPlace);
+  const q = norm(questName);
+  if (!c || !q) return false;
+
+  if (c === q || c.includes(q) || q.includes(c)) return true;
+
+  // Check significant word overlaps
+  const wordsC = cardPlace
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length >= 2);
+  const wordsQ = questName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length >= 2);
+  const common = wordsC.filter((w) => wordsQ.includes(w));
+  if (common.length >= 2) return true;
+
+  return false;
+}
+
 export function saveFoodCard(newCard: FoodCardData): FoodCardData[] {
   if (typeof window === "undefined") return [];
   try {
     const existing = getStoredFoodCards();
     const updated = [newCard, ...existing.filter((c) => c.id !== newCard.id)];
     localStorage.setItem("sq_food_cards", JSON.stringify(updated));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("sq_cards_updated"));
     return updated;
   } catch (e) {
     console.error("Failed to save food card:", e);
@@ -325,6 +361,8 @@ export function deleteFoodCard(cardId: string): FoodCardData[] {
     const existing = getStoredFoodCards();
     const updated = existing.filter((c) => c.id !== cardId);
     localStorage.setItem("sq_food_cards", JSON.stringify(updated));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("sq_cards_updated"));
     return updated;
   } catch (e) {
     return [];

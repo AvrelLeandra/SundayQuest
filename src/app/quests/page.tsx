@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import QuestCard from "@/components/QuestCard";
 import ActionButtons from "@/components/ActionButtons";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
-import { FoodCardData, getStoredFoodCards, getCategoryIcon } from "@/lib/pixelate";
+import { FoodCardData, getStoredFoodCards, getCategoryIcon, isPlaceMatch } from "@/lib/pixelate";
 import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import realPlaces from "@/data/places.json";
@@ -59,6 +59,26 @@ export default function QuestsPage() {
       }
     } catch(e) {}
     setFoodCards(getStoredFoodCards());
+  }, []);
+
+  // Always refresh foodCards whenever a quest card is opened
+  useEffect(() => {
+    if (selectedCard) {
+      setFoodCards(getStoredFoodCards());
+    }
+  }, [selectedCard]);
+
+  // Real-time synchronization when food cards are added/deleted
+  useEffect(() => {
+    const refreshCards = () => setFoodCards(getStoredFoodCards());
+    window.addEventListener("storage", refreshCards);
+    window.addEventListener("sq_cards_updated", refreshCards);
+    window.addEventListener("focus", refreshCards);
+    return () => {
+      window.removeEventListener("storage", refreshCards);
+      window.removeEventListener("sq_cards_updated", refreshCards);
+      window.removeEventListener("focus", refreshCards);
+    };
   }, []);
 
   const [mockPlaces, setMockPlaces] = useState<any[]>(() => (realPlaces as any[]).map((place: any, index: number) => {
@@ -397,8 +417,8 @@ export default function QuestsPage() {
              
                 {/* Food Cards for this restaurant */}
                 {(() => {
-                  const placeCards = foodCards.filter(
-                    (c) => c.placeName.toLowerCase() === selectedCard.name.toLowerCase()
+                  const placeCards = foodCards.filter((c) =>
+                    isPlaceMatch(c.placeName, selectedCard.name)
                   );
                   return (
                     <div className="bg-white-city border-4 border-ink p-3 rounded-2xl shadow-[4px_4px_0_rgba(38,52,58,1)] flex flex-col gap-2 relative mt-1 mb-2">

@@ -26,8 +26,9 @@ export default function CreateFoodCardModal({
   const [rating, setRating] = useState(5);
   const [colorTheme, setColorTheme] = useState<string>("coral");
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
 
-  // Sync initial props when opened
+  // Sync initial props and available places when opened
   useEffect(() => {
     if (isOpen) {
       if (initialPlaceName) setPlaceName(initialPlaceName);
@@ -35,6 +36,11 @@ export default function CreateFoodCardModal({
       const themeKeys = Object.keys(CARD_THEMES);
       const randomTheme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
       setColorTheme(randomTheme);
+      try {
+        const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
+        const names = Array.from(new Set(saved.map((p: any) => p.name).filter(Boolean))) as string[];
+        setSavedPlaces(names);
+      } catch (e) {}
     }
   }, [isOpen, initialPlaceName, initialCategory]);
 
@@ -136,11 +142,17 @@ export default function CreateFoodCardModal({
                 <MapPin className="w-3.5 h-3.5 text-brick-red absolute left-2" />
                 <input
                   type="text"
-                  placeholder="e.g. Corner House"
+                  list="saved-places-list"
+                  placeholder="e.g. 23rd Street Pizza"
                   value={placeName}
                   onChange={(e) => setPlaceName(e.target.value)}
                   className="w-full bg-white-city border-2 border-ink p-2 pl-7 text-xs font-bold text-ink outline-none uppercase placeholder:normal-case placeholder:font-normal placeholder:text-asphalt/50"
                 />
+                <datalist id="saved-places-list">
+                  {savedPlaces.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
               </div>
             </div>
           </div>
