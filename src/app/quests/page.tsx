@@ -265,36 +265,35 @@ export default function QuestsPage() {
          </div>
       </div>
 
-      {/* Grid Area */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2 custom-scrollbar relative z-10">
-         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 auto-rows-[5.5rem]">
-            {filteredQuests.length > 0 ? (
-              filteredQuests.map(place => (
-                <QuestCard 
-                    key={place.id} 
-                    place={place} 
-                    onClick={() => setSelectedCard(place)} 
-                    onToggleFavorite={(e) => { e.stopPropagation(); handleToggleLike(place.id); }}
-                  />
-              ))
-            ) : (
-              <div className="col-span-full py-8 flex flex-col items-center justify-center text-ink bg-white-city/90 border-4 border-ink p-6 rounded-xl shadow-[4px_4px_0_rgba(38,52,58,1)] text-center">
-                <Search className="w-8 h-8 mb-2 text-asphalt/60" />
-                <p className="font-black text-xs md:text-sm uppercase tracking-wider mb-1">
-                  {mockPlaces.length === 0 ? "NO QUESTS LOGGED YET" : "NO MATCHING QUESTS"}
-                </p>
-                <p className="font-bold text-[0.6rem] text-asphalt mb-4">
-                  {mockPlaces.length === 0 ? "Start your Sunday quest journey by adding your first spot!" : "Try adjusting your search or filters."}
-                </p>
-                {mockPlaces.length === 0 && (
-                  <Link href="/add" className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-4 py-2 text-[0.65rem] font-black active:translate-y-1 active:shadow-none flex items-center gap-1.5 hover:bg-[#F3D160]">
-                    <Plus className="w-3.5 h-3.5" /> ADD FIRST QUEST
-                  </Link>
-                )}
-              </div>
+      {/* Grid / Empty State Area */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-4 custom-scrollbar relative z-10">
+        {filteredQuests.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 auto-rows-[5.5rem]">
+            {filteredQuests.map(place => (
+              <QuestCard 
+                key={place.id} 
+                place={place} 
+                onClick={() => setSelectedCard(place)} 
+                onToggleFavorite={(e) => { e.stopPropagation(); handleToggleLike(place.id); }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="w-full max-w-md mx-auto mt-6 md:mt-8 bg-white-city/95 border-4 border-ink px-6 py-8 rounded-2xl shadow-[4px_4px_0_rgba(38,52,58,1)] flex flex-col items-center justify-center text-center">
+            <h3 className="font-black text-xs md:text-sm uppercase tracking-wider mb-2 text-ink">
+              {mockPlaces.length === 0 ? "NO QUESTS LOGGED YET" : "NO MATCHING QUESTS"}
+            </h3>
+            <p className="font-bold text-[0.65rem] text-asphalt mb-5 max-w-xs leading-relaxed">
+              {mockPlaces.length === 0 ? "Start your Sunday quest journey by adding your first spot!" : "Try adjusting your search or filters."}
+            </p>
+            {mockPlaces.length === 0 && (
+              <Link href="/add" className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-5 py-2.5 text-[0.65rem] font-black active:translate-y-1 active:shadow-none flex items-center gap-1.5 hover:bg-[#F3D160] transition-all">
+                <Plus className="w-3.5 h-3.5" /> ADD FIRST QUEST
+              </Link>
             )}
           </div>
-       </div>
+        )}
+      </div>
 
       {/* Detail Modal Overlay (Restored Old Layout, popup style) */}
       {selectedCard && (
