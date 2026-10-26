@@ -51,11 +51,16 @@ export default function QuestsPage() {
           }));
         // Append at the beginning so newly added quests show up first
         setMockPlaces(prev => {
-          // Avoid duplicates if effect runs twice in dev mode
-          const existingIds = new Set(prev.map(p => p.id));
+          // Avoid duplicates: if custom quest matches a default quest name, keep custom version
+          const filteredPrev = prev.filter(p => !formattedSaved.some((s: any) => isPlaceMatch(p.name, s.name)));
+          const existingIds = new Set(filteredPrev.map(p => p.id));
           const toAdd = formattedSaved.filter((p: any) => !existingIds.has(p.id));
-          return [...toAdd, ...prev];
+          return [...toAdd, ...filteredPrev];
         });
+      }
+      const deleted = new Set(JSON.parse(localStorage.getItem("sq_deleted_quests") || "[]"));
+      if (deleted.size > 0) {
+        setMockPlaces(prev => prev.filter(p => !deleted.has(p.id)));
       }
     } catch(e) {}
     setFoodCards(getStoredFoodCards());
@@ -171,6 +176,13 @@ export default function QuestsPage() {
     const localQuests = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
     const updatedLocal = localQuests.filter((q: any) => q.id !== placeId);
     localStorage.setItem("sq_custom_quests", JSON.stringify(updatedLocal));
+    try {
+      const deleted = JSON.parse(localStorage.getItem("sq_deleted_quests") || "[]");
+      if (!deleted.includes(placeId)) {
+        deleted.push(placeId);
+        localStorage.setItem("sq_deleted_quests", JSON.stringify(deleted));
+      }
+    } catch(e) {}
     setSelectedCard(null);
   };
 

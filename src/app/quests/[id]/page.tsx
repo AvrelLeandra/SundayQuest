@@ -116,6 +116,11 @@ export default function RestaurantDetail() {
       const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
       const updated = saved.filter((p: any) => String(p.id) !== String(idStr));
       localStorage.setItem("sq_custom_quests", JSON.stringify(updated));
+      const deleted = JSON.parse(localStorage.getItem("sq_deleted_quests") || "[]");
+      if (!deleted.includes(idStr)) {
+        deleted.push(idStr);
+        localStorage.setItem("sq_deleted_quests", JSON.stringify(deleted));
+      }
     } catch (e) {}
     router.push("/quests");
   };

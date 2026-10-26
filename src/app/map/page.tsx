@@ -107,9 +107,12 @@ export default function MapPage() {
         }));
 
         setMockPlaces((prev) => {
-          const existingIds = new Set(prev.map((p) => p.id));
+          const filteredPrev = prev.filter(
+            (p) => !formattedSaved.some((s: any) => s.name && p.name && s.name.toLowerCase().trim() === p.name.toLowerCase().trim())
+          );
+          const existingIds = new Set(filteredPrev.map((p) => p.id));
           const toAdd = formattedSaved.filter((p: any) => !existingIds.has(p.id));
-          return [...toAdd, ...prev];
+          return [...toAdd, ...filteredPrev];
         });
 
         // Auto-fix any custom quest that got stuck at default coordinates (12.9716, 77.5946)
@@ -136,6 +139,10 @@ export default function MapPage() {
             } catch (err) {}
           }
         });
+      }
+      const deleted = new Set(JSON.parse(localStorage.getItem("sq_deleted_quests") || "[]"));
+      if (deleted.size > 0) {
+        setMockPlaces((prev) => prev.filter((p) => !deleted.has(p.id)));
       }
     } catch (e) {}
   }, []);

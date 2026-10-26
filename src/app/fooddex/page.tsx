@@ -13,7 +13,12 @@ export default function FoodDexPage() {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
-      setAllPlaces([...saved, ...realPlaces]);
+      const deleted = new Set(JSON.parse(localStorage.getItem("sq_deleted_quests") || "[]"));
+      const savedNames = new Set(saved.map((s: any) => s.name?.toLowerCase().trim()));
+      const filteredPlaces = (realPlaces as any[]).filter(
+        (p) => !deleted.has(p.id) && !savedNames.has(p.name?.toLowerCase().trim())
+      );
+      setAllPlaces([...saved, ...filteredPlaces]);
     } catch (e) {}
   }, []);
 
