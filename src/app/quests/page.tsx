@@ -5,10 +5,9 @@ import { useState, useEffect } from "react";
 import QuestCard from "@/components/QuestCard";
 import ActionButtons from "@/components/ActionButtons";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
-import SyncDevicesModal from "@/components/SyncDevicesModal";
 import { FoodCardData, getStoredFoodCards, getCategoryIcon, isPlaceMatch } from "@/lib/pixelate";
 import { syncAllWithCloud, initRealtimeSync, getQuestEdits, saveQuestEdit } from "@/lib/sync";
-import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles, Smartphone, Check, Edit2 } from "lucide-react";
+import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles, Check, Edit2 } from "lucide-react";
 import Link from "next/link";
 import realPlaces from "@/data/places.json";
 
@@ -20,7 +19,6 @@ export default function QuestsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
-  const [isSyncOpen, setIsSyncOpen] = useState(false);
   const [foodCards, setFoodCards] = useState<FoodCardData[]>([]);
 
   const loadLocalQuests = () => {
@@ -375,13 +373,6 @@ export default function QuestsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsSyncOpen(true)}
-                className="bg-white-city hover:bg-sand border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-2.5 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1.5 transition-all"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-deep-green" /> SYNC TO PHONE
-              </button>
-
               <Link href="/add" className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1 hover:brightness-105 transition-all">
                 <Plus className="w-3 h-3" /> NEW QUEST
               </Link>
@@ -712,15 +703,6 @@ export default function QuestsPage() {
         </div>
       )}
 
-      {/* Sync Devices Modal */}
-      <SyncDevicesModal
-        isOpen={isSyncOpen}
-        onClose={() => setIsSyncOpen(false)}
-        onSynced={() => {
-          setFoodCards(getStoredFoodCards());
-          loadLocalQuests();
-        }}
-      />
     </div>
   );
 }

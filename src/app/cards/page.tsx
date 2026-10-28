@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, Plus, Search, Trash2, X, Download, Share2, Layers, Smartphone } from "lucide-react";
+import { Sparkles, Plus, Search, Trash2, X, Download, Share2, Layers } from "lucide-react";
 import FoodCard from "@/components/FoodCard";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
-import SyncDevicesModal from "@/components/SyncDevicesModal";
 import { FoodCardData, getStoredFoodCards, deleteFoodCard } from "@/lib/pixelate";
 import { syncAllWithCloud, initRealtimeSync } from "@/lib/sync";
 
@@ -14,7 +13,6 @@ export default function CardsPage() {
   const [activeCategory, setActiveCategory] = useState("ALL");
   const [selectedCard, setSelectedCard] = useState<FoodCardData | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isSyncOpen, setIsSyncOpen] = useState(false);
 
   useEffect(() => {
     const refresh = () => setCards(getStoredFoodCards());
@@ -80,13 +78,6 @@ export default function CardsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsSyncOpen(true)}
-              className="bg-white-city hover:bg-sand border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-2.5 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1.5 transition-all"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-deep-green" /> SYNC TO PHONE
-            </button>
-
             <button
               onClick={() => setIsCreateOpen(true)}
               className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1 hover:brightness-105 transition-all"
@@ -192,13 +183,6 @@ export default function CardsPage() {
         onCardSaved={(newCard) => {
           setCards(getStoredFoodCards());
         }}
-      />
-
-      {/* Sync Devices Modal */}
-      <SyncDevicesModal
-        isOpen={isSyncOpen}
-        onClose={() => setIsSyncOpen(false)}
-        onSynced={() => setCards(getStoredFoodCards())}
       />
     </div>
   );

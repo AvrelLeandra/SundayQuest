@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { FoodCardData, getStoredFoodCards, saveFoodCard as saveLocalFoodCard } from "@/lib/pixelate";
+import { FoodCardData, getStoredFoodCards } from "@/lib/pixelate";
 
 export interface QuestEdit {
   notes?: string;
@@ -32,13 +32,14 @@ export function saveQuestEdit(placeId: string, edit: Partial<QuestEdit>): void {
   if (typeof window === "undefined" || !placeId) return;
   try {
     const current = getQuestEdits();
+    const updatedEdit: QuestEdit = {
+      ...(current[placeId] || {}),
+      ...edit,
+      updatedAt: new Date().toISOString(),
+    };
     const updated = {
       ...current,
-      [placeId]: {
-        ...(current[placeId] || {}),
-        ...edit,
-        updatedAt: new Date().toISOString(),
-      },
+      [placeId]: updatedEdit,
     };
     localStorage.setItem("sq_quest_edits", JSON.stringify(updated));
 
@@ -56,6 +57,11 @@ export function saveQuestEdit(placeId: string, edit: Partial<QuestEdit>): void {
 
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("sq_quests_updated"));
+
+    // Async push to Supabase cloud
+    if (isSupabaseConfigured()) {
+      pushQuestEditToCloud(placeId, updatedEdit).catch(() => {});
+    }
   } catch (e) {
     console.error("Failed to save quest edit:", e);
   }
@@ -66,12 +72,15 @@ let realtimeChannel: any = null;
 
 // Check if Supabase client has valid, active URL configured
 export function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    "";
   return (
     url.startsWith("https://") &&
     !url.includes("placeholder") &&
-    !url.includes("wwwzwbnutshhhttumzyu") &&
     key.length > 20
   );
 }
@@ -157,7 +166,7 @@ export async function pushQuestToCloud(quest: any): Promise<boolean> {
   if (!isSupabaseConfigured()) return false;
   try {
     const row = {
-      id: quest.id,
+      id: String(quest.id),
       name: quest.name,
       city: quest.city || "Bangalore",
       neighborhood: quest.neighborhood || "",
@@ -204,8 +213,34 @@ export async function deleteQuestFromCloud(id: string): Promise<boolean> {
 }
 
 /**
+ * Push a quest edit (notes, would_return, visit_count, favorite) to Supabase cloud
+ */
+export async function pushQuestEditToCloud(placeId: string, edit: QuestEdit): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const row = {
+      place_id: String(placeId),
+      notes: edit.notes ?? null,
+      would_return: edit.would_return ?? null,
+      visit_count: edit.visit_count ?? null,
+      favorite: edit.favorite ?? null,
+      updated_at: edit.updatedAt || new Date().toISOString(),
+    };
+    const { error } = await supabase.from("quest_edits").upsert(row);
+    if (error) {
+      console.warn("[CloudSync] Failed to push quest edit to cloud:", error.message);
+      return false;
+    }
+    return true;
+  } catch (e: any) {
+    console.warn("[CloudSync] Network error pushing quest edit:", e.message);
+    return false;
+  }
+}
+
+/**
  * Full bidirectional sync between localStorage and Supabase cloud.
- * Uploads local items missing from cloud, and downloads cloud items missing from local.
+ * Syncs food_cards, custom_quests, and quest_edits automatically.
  */
 export async function syncAllWithCloud(): Promise<{ success: boolean; cardsCount: number; questsCount: number; message: string }> {
   if (typeof window === "undefined") {
@@ -257,20 +292,70 @@ export async function syncAllWithCloud(): Promise<{ success: boolean; cardsCount
 
     let finalQuests = [...localQuests];
     if (!questFetchErr && Array.isArray(cloudQuests)) {
-      const localIdSet = new Set(localQuests.map((q: any) => q.id));
-      const cloudIdSet = new Set(cloudQuests.map((q: any) => q.id));
+      const localIdSet = new Set(localQuests.map((q: any) => String(q.id)));
+      const cloudIdSet = new Set(cloudQuests.map((q: any) => String(q.id)));
 
       // Push local quests that don't exist in cloud yet
-      const missingInCloud = localQuests.filter((q: any) => !cloudIdSet.has(q.id));
+      const missingInCloud = localQuests.filter((q: any) => !cloudIdSet.has(String(q.id)));
       for (const quest of missingInCloud) {
         await pushQuestToCloud(quest);
       }
 
       // Merge cloud quests missing from local
-      const missingInLocal = cloudQuests.filter((q: any) => !localIdSet.has(q.id));
+      const missingInLocal = cloudQuests.filter((q: any) => !localIdSet.has(String(q.id)));
       finalQuests = [...missingInLocal, ...localQuests];
 
       localStorage.setItem("sq_custom_quests", JSON.stringify(finalQuests));
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("sq_quests_updated"));
+    }
+
+    // 3. Sync Quest Edits (notes, dishes tried, visit count, would_return, favorites)
+    const localEdits = getQuestEdits();
+    const { data: cloudEdits, error: editsFetchErr } = await supabase.from("quest_edits").select("*");
+
+    let finalEdits: Record<string, QuestEdit> = { ...localEdits };
+    if (!editsFetchErr && Array.isArray(cloudEdits)) {
+      const cloudMap: Record<string, QuestEdit> = {};
+      cloudEdits.forEach((r: any) => {
+        cloudMap[r.place_id] = {
+          notes: r.notes !== null ? r.notes : undefined,
+          would_return: r.would_return !== null ? r.would_return : undefined,
+          visit_count: r.visit_count !== null ? r.visit_count : undefined,
+          favorite: r.favorite !== null ? r.favorite : undefined,
+          updatedAt: r.updated_at,
+        };
+      });
+
+      // Merge cloud edits into local if cloud is newer or local is missing
+      for (const [placeId, cEdit] of Object.entries(cloudMap)) {
+        const lEdit = localEdits[placeId];
+        if (!lEdit) {
+          finalEdits[placeId] = cEdit;
+        } else {
+          const cloudTime = new Date(cEdit.updatedAt || 0).getTime();
+          const localTime = new Date(lEdit.updatedAt || 0).getTime();
+          if (cloudTime >= localTime) {
+            finalEdits[placeId] = { ...lEdit, ...cEdit };
+          }
+        }
+      }
+
+      // Push local edits to cloud if missing from cloud or local is newer
+      for (const [placeId, lEdit] of Object.entries(localEdits)) {
+        const cEdit = cloudMap[placeId];
+        if (!cEdit) {
+          await pushQuestEditToCloud(placeId, lEdit);
+        } else {
+          const cloudTime = new Date(cEdit.updatedAt || 0).getTime();
+          const localTime = new Date(lEdit.updatedAt || 0).getTime();
+          if (localTime > cloudTime) {
+            await pushQuestEditToCloud(placeId, lEdit);
+          }
+        }
+      }
+
+      localStorage.setItem("sq_quest_edits", JSON.stringify(finalEdits));
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new Event("sq_quests_updated"));
     }
@@ -308,6 +393,10 @@ export function initRealtimeSync(onUpdate?: () => void): () => void {
         if (onUpdate) onUpdate();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "custom_quests" }, async () => {
+        await syncAllWithCloud();
+        if (onUpdate) onUpdate();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "quest_edits" }, async () => {
         await syncAllWithCloud();
         if (onUpdate) onUpdate();
       })
@@ -422,7 +511,7 @@ export function applySyncPayload(payload: SyncPayload): { cardsImported: number;
   window.dispatchEvent(new Event("sq_cards_updated"));
   window.dispatchEvent(new Event("sq_quests_updated"));
 
-  // 5. If Cloud is active, push imported cards & quests to cloud too!
+  // 6. If Cloud is active, push imported items to cloud too
   if (isSupabaseConfigured()) {
     setTimeout(() => {
       syncAllWithCloud();

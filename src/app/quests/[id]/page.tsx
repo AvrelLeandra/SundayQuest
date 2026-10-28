@@ -8,7 +8,7 @@ import realPlaces from "@/data/places.json";
 import ActionButtons from "@/components/ActionButtons";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
 import { FoodCardData, getStoredFoodCards, getCategoryIcon, isPlaceMatch } from "@/lib/pixelate";
-import { getQuestEdits, saveQuestEdit } from "@/lib/sync";
+import { getQuestEdits, saveQuestEdit, syncAllWithCloud, initRealtimeSync } from "@/lib/sync";
 
 export default function RestaurantDetail() {
   const router = useRouter();
@@ -25,15 +25,22 @@ export default function RestaurantDetail() {
   useEffect(() => {
     setFoodCards(getStoredFoodCards());
     const refresh = () => setFoodCards(getStoredFoodCards());
+    syncAllWithCloud().then(refresh).catch(() => {});
+    const cleanupRealtime = initRealtimeSync(() => {
+      refresh();
+      loadPlaceData();
+    });
+
     window.addEventListener("storage", refresh);
     window.addEventListener("sq_cards_updated", refresh);
     window.addEventListener("focus", refresh);
     return () => {
+      cleanupRealtime();
       window.removeEventListener("storage", refresh);
       window.removeEventListener("sq_cards_updated", refresh);
       window.removeEventListener("focus", refresh);
     };
-  }, []);
+  }, [idStr]);
 
   const loadPlaceData = () => {
     try {

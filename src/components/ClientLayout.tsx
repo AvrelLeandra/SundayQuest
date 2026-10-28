@@ -2,11 +2,37 @@
 
 import { usePathname } from 'next/navigation';
 import Navigation from "@/components/Navigation";
-import React from 'react';
+import React, { useEffect } from 'react';
+import { syncAllWithCloud, initRealtimeSync } from "@/lib/sync";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
+  // Background Cloud Sync & Live Realtime listener across all devices
+  useEffect(() => {
+    // 1. Initial background sync on app load
+    syncAllWithCloud().catch(() => {});
+
+    // 2. Realtime listener for cross-device updates
+    const cleanupRealtime = initRealtimeSync();
+
+    // 3. Re-sync whenever user switches back to the tab/app
+    const handleFocus = () => {
+      syncAllWithCloud().catch(() => {});
+    };
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        syncAllWithCloud().catch(() => {});
+      }
+    });
+
+    return () => {
+      cleanupRealtime();
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
   // Hide navigation on the player selection splash screen (login)
   const isSplashPage = pathname === '/login';
 
