@@ -121,6 +121,9 @@ export default function RestaurantDetail() {
         deleted.push(idStr);
         localStorage.setItem("sq_deleted_quests", JSON.stringify(deleted));
       }
+      import("@/lib/sync").then(({ deleteQuestFromCloud }) => {
+        deleteQuestFromCloud(idStr).catch(() => {});
+      });
     } catch (e) {}
     router.push("/quests");
   };

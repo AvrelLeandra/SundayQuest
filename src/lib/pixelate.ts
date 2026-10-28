@@ -348,6 +348,12 @@ export function saveFoodCard(newCard: FoodCardData): FoodCardData[] {
     localStorage.setItem("sq_food_cards", JSON.stringify(updated));
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("sq_cards_updated"));
+
+    // Async push to Supabase cloud in background
+    import("@/lib/sync").then(({ pushCardToCloud }) => {
+      pushCardToCloud(newCard).catch(() => {});
+    });
+
     return updated;
   } catch (e) {
     console.error("Failed to save food card:", e);
@@ -363,6 +369,12 @@ export function deleteFoodCard(cardId: string): FoodCardData[] {
     localStorage.setItem("sq_food_cards", JSON.stringify(updated));
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("sq_cards_updated"));
+
+    // Async delete from Supabase cloud in background
+    import("@/lib/sync").then(({ deleteCardFromCloud }) => {
+      deleteCardFromCloud(cardId).catch(() => {});
+    });
+
     return updated;
   } catch (e) {
     return [];

@@ -5,8 +5,10 @@ import { useState, useEffect } from "react";
 import QuestCard from "@/components/QuestCard";
 import ActionButtons from "@/components/ActionButtons";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
+import SyncDevicesModal from "@/components/SyncDevicesModal";
 import { FoodCardData, getStoredFoodCards, getCategoryIcon, isPlaceMatch } from "@/lib/pixelate";
-import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles } from "lucide-react";
+import { syncAllWithCloud, initRealtimeSync } from "@/lib/sync";
+import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles, Smartphone } from "lucide-react";
 import Link from "next/link";
 import realPlaces from "@/data/places.json";
 
@@ -18,9 +20,10 @@ export default function QuestsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [isSyncOpen, setIsSyncOpen] = useState(false);
   const [foodCards, setFoodCards] = useState<FoodCardData[]>([]);
 
-  useEffect(() => {
+  const loadLocalQuests = () => {
     try {
       const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
       if (saved.length > 0) {
@@ -64,6 +67,18 @@ export default function QuestsPage() {
       }
     } catch(e) {}
     setFoodCards(getStoredFoodCards());
+  };
+
+  useEffect(() => {
+    loadLocalQuests();
+
+    // Pull cloud data & listen for realtime updates
+    syncAllWithCloud().then(() => loadLocalQuests());
+    const cleanupRealtime = initRealtimeSync(() => loadLocalQuests());
+
+    return () => {
+      cleanupRealtime();
+    };
   }, []);
 
   // Always refresh foodCards whenever a quest card is opened
@@ -73,16 +88,21 @@ export default function QuestsPage() {
     }
   }, [selectedCard]);
 
-  // Real-time synchronization when food cards are added/deleted
+  // Real-time synchronization when food cards or quests are added/deleted
   useEffect(() => {
-    const refreshCards = () => setFoodCards(getStoredFoodCards());
-    window.addEventListener("storage", refreshCards);
-    window.addEventListener("sq_cards_updated", refreshCards);
-    window.addEventListener("focus", refreshCards);
+    const refreshAll = () => {
+      setFoodCards(getStoredFoodCards());
+      loadLocalQuests();
+    };
+    window.addEventListener("storage", refreshAll);
+    window.addEventListener("sq_cards_updated", refreshAll);
+    window.addEventListener("sq_quests_updated", refreshAll);
+    window.addEventListener("focus", refreshAll);
     return () => {
-      window.removeEventListener("storage", refreshCards);
-      window.removeEventListener("sq_cards_updated", refreshCards);
-      window.removeEventListener("focus", refreshCards);
+      window.removeEventListener("storage", refreshAll);
+      window.removeEventListener("sq_cards_updated", refreshAll);
+      window.removeEventListener("sq_quests_updated", refreshAll);
+      window.removeEventListener("focus", refreshAll);
     };
   }, []);
 
@@ -183,6 +203,12 @@ export default function QuestsPage() {
         localStorage.setItem("sq_deleted_quests", JSON.stringify(deleted));
       }
     } catch(e) {}
+
+    // Async delete from cloud
+    import("@/lib/sync").then(({ deleteQuestFromCloud }) => {
+      deleteQuestFromCloud(placeId).catch(() => {});
+    });
+
     setSelectedCard(null);
   };
 
@@ -260,9 +286,18 @@ export default function QuestsPage() {
                 LOGGED: {mockPlaces.length} {mockPlaces.length === 1 ? "QUEST" : "QUESTS"}
               </p>
             </div>
-            <Link href="/add" className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1 hover:brightness-105 transition-all">
-              <Plus className="w-3 h-3" /> NEW QUEST
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsSyncOpen(true)}
+                className="bg-white-city hover:bg-sand border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-2.5 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1.5 transition-all"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-deep-green" /> SYNC TO PHONE
+              </button>
+
+              <Link href="/add" className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1 hover:brightness-105 transition-all">
+                <Plus className="w-3 h-3" /> NEW QUEST
+              </Link>
+            </div>
          </div>
 
          {/* Search & Filter Bar */}
@@ -511,12 +546,19 @@ export default function QuestsPage() {
           onCardSaved={() => setFoodCards(getStoredFoodCards())}
         />
       )}
-
-
           </div>
         </div>
       )}
 
+      {/* Sync Devices Modal */}
+      <SyncDevicesModal
+        isOpen={isSyncOpen}
+        onClose={() => setIsSyncOpen(false)}
+        onSynced={() => {
+          setFoodCards(getStoredFoodCards());
+          loadLocalQuests();
+        }}
+      />
     </div>
   );
 }

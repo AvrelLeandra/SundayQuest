@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, Plus, Search, Trash2, X, Download, Share2, Layers } from "lucide-react";
+import { Sparkles, Plus, Search, Trash2, X, Download, Share2, Layers, Smartphone } from "lucide-react";
 import FoodCard from "@/components/FoodCard";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
+import SyncDevicesModal from "@/components/SyncDevicesModal";
 import { FoodCardData, getStoredFoodCards, deleteFoodCard } from "@/lib/pixelate";
+import { syncAllWithCloud, initRealtimeSync } from "@/lib/sync";
 
 export default function CardsPage() {
   const [cards, setCards] = useState<FoodCardData[]>([]);
@@ -12,9 +14,26 @@ export default function CardsPage() {
   const [activeCategory, setActiveCategory] = useState("ALL");
   const [selectedCard, setSelectedCard] = useState<FoodCardData | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isSyncOpen, setIsSyncOpen] = useState(false);
 
   useEffect(() => {
-    setCards(getStoredFoodCards());
+    const refresh = () => setCards(getStoredFoodCards());
+    refresh();
+
+    // Pull cloud data & listen for realtime updates
+    syncAllWithCloud().then(refresh);
+    const cleanupRealtime = initRealtimeSync(refresh);
+
+    window.addEventListener("storage", refresh);
+    window.addEventListener("sq_cards_updated", refresh);
+    window.addEventListener("focus", refresh);
+
+    return () => {
+      cleanupRealtime();
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("sq_cards_updated", refresh);
+      window.removeEventListener("focus", refresh);
+    };
   }, []);
 
   const handleDelete = (id: string) => {
@@ -60,12 +79,21 @@ export default function CardsPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1 hover:brightness-105 transition-all"
-          >
-            <Plus className="w-3 h-3" strokeWidth={2.5} /> NEW FOOD CARD
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsSyncOpen(true)}
+              className="bg-white-city hover:bg-sand border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-2.5 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1.5 transition-all"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-deep-green" /> SYNC TO PHONE
+            </button>
+
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="bg-mustard border-2 border-ink shadow-[2px_2px_0_rgba(38,52,58,1)] text-ink px-3 py-1 text-[0.65rem] font-bold active:translate-y-1 active:shadow-none flex items-center gap-1 hover:brightness-105 transition-all"
+            >
+              <Plus className="w-3 h-3" strokeWidth={2.5} /> NEW FOOD CARD
+            </button>
+          </div>
         </div>
 
         {/* Search & Category Filter Bar */}
@@ -164,6 +192,13 @@ export default function CardsPage() {
         onCardSaved={(newCard) => {
           setCards(getStoredFoodCards());
         }}
+      />
+
+      {/* Sync Devices Modal */}
+      <SyncDevicesModal
+        isOpen={isSyncOpen}
+        onClose={() => setIsSyncOpen(false)}
+        onSynced={() => setCards(getStoredFoodCards())}
       />
     </div>
   );

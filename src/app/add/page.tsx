@@ -73,6 +73,14 @@ export default function AddRestaurantPage() {
       };
     const existing = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
     localStorage.setItem("sq_custom_quests", JSON.stringify([newQuest, ...existing]));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("sq_quests_updated"));
+
+    // Async push to cloud
+    import("@/lib/sync").then(({ pushQuestToCloud }) => {
+      pushQuestToCloud(newQuest).catch(() => {});
+    });
+
     setTimeout(() => {
       setIsSaving(false);
       setShowCelebration(true);
