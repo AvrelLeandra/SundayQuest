@@ -1,12 +1,64 @@
 import { supabase } from "@/lib/supabase";
 import { FoodCardData, getStoredFoodCards, saveFoodCard as saveLocalFoodCard } from "@/lib/pixelate";
 
+export interface QuestEdit {
+  notes?: string;
+  would_return?: boolean | null;
+  visit_count?: number;
+  favorite?: boolean;
+  updatedAt?: string;
+}
+
 export interface SyncPayload {
   version: number;
   exportedAt: string;
   foodCards: FoodCardData[];
   customQuests: any[];
   deletedQuests: string[];
+  questEdits?: Record<string, QuestEdit>;
+}
+
+export function getQuestEdits(): Record<string, QuestEdit> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem("sq_quest_edits");
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+export function saveQuestEdit(placeId: string, edit: Partial<QuestEdit>): void {
+  if (typeof window === "undefined" || !placeId) return;
+  try {
+    const current = getQuestEdits();
+    const updated = {
+      ...current,
+      [placeId]: {
+        ...(current[placeId] || {}),
+        ...edit,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+    localStorage.setItem("sq_quest_edits", JSON.stringify(updated));
+
+    // Also update in sq_custom_quests if it exists there
+    const localQuests = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
+    if (localQuests.some((q: any) => String(q.id) === String(placeId))) {
+      const updatedLocal = localQuests.map((q: any) => {
+        if (String(q.id) === String(placeId)) {
+          return { ...q, ...edit };
+        }
+        return q;
+      });
+      localStorage.setItem("sq_custom_quests", JSON.stringify(updatedLocal));
+    }
+
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("sq_quests_updated"));
+  } catch (e) {
+    console.error("Failed to save quest edit:", e);
+  }
 }
 
 let isSyncing = false;
@@ -277,11 +329,12 @@ export function initRealtimeSync(onUpdate?: () => void): () => void {
  */
 export function generateSyncPayload(): SyncPayload {
   if (typeof window === "undefined") {
-    return { version: 1, exportedAt: new Date().toISOString(), foodCards: [], customQuests: [], deletedQuests: [] };
+    return { version: 1, exportedAt: new Date().toISOString(), foodCards: [], customQuests: [], deletedQuests: [], questEdits: {} };
   }
   const foodCards = getStoredFoodCards();
   const customQuests = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
   const deletedQuests = JSON.parse(localStorage.getItem("sq_deleted_quests") || "[]");
+  const questEdits = getQuestEdits();
 
   return {
     version: 1,
@@ -289,6 +342,7 @@ export function generateSyncPayload(): SyncPayload {
     foodCards,
     customQuests,
     deletedQuests,
+    questEdits,
   };
 }
 
@@ -356,7 +410,14 @@ export function applySyncPayload(payload: SyncPayload): { cardsImported: number;
   (payload.deletedQuests || []).forEach((id) => existingDeleted.add(id));
   localStorage.setItem("sq_deleted_quests", JSON.stringify(Array.from(existingDeleted)));
 
-  // 4. Trigger UI Updates
+  // 4. Merge Quest Edits (notes, food tried, visits, would_return)
+  if (payload.questEdits && typeof payload.questEdits === "object") {
+    const existingEdits = getQuestEdits();
+    const mergedEdits = { ...existingEdits, ...payload.questEdits };
+    localStorage.setItem("sq_quest_edits", JSON.stringify(mergedEdits));
+  }
+
+  // 5. Trigger UI Updates
   window.dispatchEvent(new Event("storage"));
   window.dispatchEvent(new Event("sq_cards_updated"));
   window.dispatchEvent(new Event("sq_quests_updated"));

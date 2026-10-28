@@ -7,8 +7,8 @@ import ActionButtons from "@/components/ActionButtons";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
 import SyncDevicesModal from "@/components/SyncDevicesModal";
 import { FoodCardData, getStoredFoodCards, getCategoryIcon, isPlaceMatch } from "@/lib/pixelate";
-import { syncAllWithCloud, initRealtimeSync } from "@/lib/sync";
-import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles, Smartphone } from "lucide-react";
+import { syncAllWithCloud, initRealtimeSync, getQuestEdits, saveQuestEdit } from "@/lib/sync";
+import { Filter, Search, Plus, MapPin, Hash, ArrowDownUp, X, Star, BookOpen, Heart, Calendar, CheckCircle, Sparkles, Smartphone, Check, Edit2 } from "lucide-react";
 import Link from "next/link";
 import realPlaces from "@/data/places.json";
 
@@ -25,46 +25,91 @@ export default function QuestsPage() {
 
   const loadLocalQuests = () => {
     try {
+      const edits = getQuestEdits();
       const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
-      if (saved.length > 0) {
-        const formattedSaved = saved.map((place: any) => ({
-            id: place.id,
-            name: place.name,
-            city: place.city,
-            neighborhood: place.neighborhood,
-            category: place.category,
-            price: "$".repeat((place as any).price_level || 2),
-            favorite: place.favorite,
-            tags: place.category ? place.category.toLowerCase().split(" ") : (place.tags || []), 
-            visit_count: place.visit_count || 1,
-            notes: place.notes,
-            would_return: place.would_return,
-            visits: [
-              {
-                date: new Date().toISOString().split("T")[0],
-                overall_score: Math.round(place.rating * 10) || 75,
-                taste_score: (place.custom_ratings?.taste * 10) || 70,
-                vibe_score: (place.custom_ratings?.vibe * 10) || 70,
-                value_score: (place.custom_ratings?.portn * 10) || 70,
-                notes: place.notes || "Added via log new quest.",
-                would_return: place.would_return,
-                photo_url: ""
-              }
-            ]
-          }));
-        // Append at the beginning so newly added quests show up first
-        setMockPlaces(prev => {
-          // Avoid duplicates: if custom quest matches a default quest name, keep custom version
-          const filteredPrev = prev.filter(p => !formattedSaved.some((s: any) => isPlaceMatch(p.name, s.name)));
-          const existingIds = new Set(filteredPrev.map(p => p.id));
-          const toAdd = formattedSaved.filter((p: any) => !existingIds.has(p.id));
-          return [...toAdd, ...filteredPrev];
-        });
-      }
       const deleted = new Set(JSON.parse(localStorage.getItem("sq_deleted_quests") || "[]"));
-      if (deleted.size > 0) {
-        setMockPlaces(prev => prev.filter(p => !deleted.has(p.id)));
-      }
+
+      // 1. Format custom quests with edits applied
+      const formattedSaved = saved.map((place: any) => {
+        const edit = edits[place.id];
+        const notes = edit?.notes !== undefined ? edit.notes : place.notes;
+        const would_return = edit?.would_return !== undefined ? edit.would_return : place.would_return;
+        const visit_count = edit?.visit_count ?? place.visit_count ?? 1;
+        const favorite = edit?.favorite !== undefined ? edit.favorite : place.favorite;
+
+        return {
+          id: place.id,
+          name: place.name,
+          city: place.city,
+          neighborhood: place.neighborhood,
+          category: place.category,
+          price: "$".repeat((place as any).price_level || 2),
+          favorite,
+          tags: place.category ? place.category.toLowerCase().split(" ") : (place.tags || []), 
+          visit_count,
+          notes,
+          would_return,
+          visits: [
+            {
+              date: new Date().toISOString().split("T")[0],
+              overall_score: Math.round(place.rating * 10) || 75,
+              taste_score: (place.custom_ratings?.taste * 10) || 70,
+              vibe_score: (place.custom_ratings?.vibe * 10) || 70,
+              value_score: (place.custom_ratings?.portn * 10) || 70,
+              notes: notes || "Added via log new quest.",
+              would_return,
+              photo_url: ""
+            }
+          ]
+        };
+      });
+
+      // 2. Format default places with edits applied
+      const formattedDefaults = (realPlaces as any[]).map((place: any, index: number) => {
+        let baseScore = place.rating;
+        if (baseScore <= 5) baseScore = baseScore * 2;
+        const edit = edits[place.id];
+        const notes = edit?.notes !== undefined ? edit.notes : (place.notes || `Really loved the ${place.category.toLowerCase()} here. Perfect spot for a Sunday!`);
+        const would_return = edit?.would_return !== undefined ? edit.would_return : true;
+        const visit_count = edit?.visit_count ?? 1;
+        const favorite = edit?.favorite !== undefined ? edit.favorite : (baseScore > 8);
+
+        return {
+          id: place.id,
+          name: place.name,
+          city: place.city,
+          neighborhood: place.neighborhood,
+          category: place.category,
+          price: "$".repeat((place as any).price_level || 2),
+          favorite,
+          visit_count,
+          notes,
+          would_return,
+          tags: place.category.toLowerCase().split(" "),
+          visits: [
+            {
+              date: `2023-${(index % 12) + 1}-15`,
+              overall_score: Math.round(baseScore * 10),
+              taste_score: Math.min(100, Math.round(baseScore * 10) + 5),
+              vibe_score: Math.round(baseScore * 10) - 2,
+              value_score: Math.round(baseScore * 10) + 2,
+              notes,
+              would_return,
+              photo_url: ""
+            }
+          ]
+        };
+      });
+
+      // 3. Filter superseded defaults and deleted places
+      const customNames = formattedSaved.map((s: any) => s.name?.toLowerCase().trim()).filter(Boolean);
+      const filteredDefaults = formattedDefaults.filter(
+        (p) => !deleted.has(p.id) && !customNames.some((cName: string) => isPlaceMatch(p.name, cName))
+      );
+      const existingIds = new Set(filteredDefaults.map((p) => p.id));
+      const toAdd = formattedSaved.filter((p: any) => !deleted.has(p.id) && !existingIds.has(p.id));
+
+      setMockPlaces([...toAdd, ...filteredDefaults]);
     } catch(e) {}
     setFoodCards(getStoredFoodCards());
   };
@@ -85,6 +130,9 @@ export default function QuestsPage() {
   useEffect(() => {
     if (selectedCard) {
       setFoodCards(getStoredFoodCards());
+      const edits = getQuestEdits();
+      const currentNotes = edits[selectedCard.id]?.notes ?? selectedCard.notes ?? selectedCard.visits?.[0]?.notes ?? "";
+      setEditNotes(currentNotes);
     }
   }, [selectedCard]);
 
@@ -136,60 +184,101 @@ export default function QuestsPage() {
     };
   }));
 
-  const handleAddVisit = (placeId: string) => {
+  const saveQuestNotes = (placeId: string, notes: string) => {
+    saveQuestEdit(placeId, { notes });
     setMockPlaces(prev => prev.map(p => {
       if (p.id === placeId) {
-        return { ...p, visit_count: ((p as any).visit_count || 1) + 1 };
+        const updatedVisits = p.visits && p.visits.length > 0
+          ? [{ ...p.visits[0], notes }, ...p.visits.slice(1)]
+          : [{ notes }];
+        return { ...p, notes, visits: updatedVisits };
       }
       return p;
     }));
     setSelectedCard((prev: any) => {
       if (prev && prev.id === placeId) {
-        return { ...prev, visit_count: (prev.visit_count || 1) + 1 };
+        const updatedVisits = prev.visits && prev.visits.length > 0
+          ? [{ ...prev.visits[0], notes }, ...prev.visits.slice(1)]
+          : [{ notes }];
+        return { ...prev, notes, visits: updatedVisits };
       }
       return prev;
     });
-    // Persist to local storage if custom
-    const localQuests = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
-    const updatedLocal = localQuests.map((q: any) => q.id === placeId ? { ...q, visit_count: (q.visit_count || 1) + 1 } : q);
-    localStorage.setItem("sq_custom_quests", JSON.stringify(updatedLocal));
   };
 
-  const handleRemoveVisit = (placeId: string) => {
+  const handleAddVisit = (placeId: string) => {
+    const nextCount = ((selectedCard?.visit_count || 1) + 1);
+    saveQuestEdit(placeId, { visit_count: nextCount });
     setMockPlaces(prev => prev.map(p => {
-      if (p.id === placeId && ((p as any).visit_count || 1) > 1) {
-        return { ...p, visit_count: ((p as any).visit_count || 1) - 1 };
+      if (p.id === placeId) {
+        return { ...p, visit_count: nextCount };
       }
       return p;
     }));
     setSelectedCard((prev: any) => {
-      if (prev && prev.id === placeId && (prev.visit_count || 1) > 1) {
-        return { ...prev, visit_count: (prev.visit_count || 1) - 1 };
+      if (prev && prev.id === placeId) {
+        return { ...prev, visit_count: nextCount };
       }
       return prev;
     });
-    // Persist to local storage if custom
-    const localQuests = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
-    const updatedLocal = localQuests.map((q: any) => q.id === placeId && (q.visit_count || 1) > 1 ? { ...q, visit_count: (q.visit_count || 1) - 1 } : q);
-    localStorage.setItem("sq_custom_quests", JSON.stringify(updatedLocal));
+  };
+
+  const handleRemoveVisit = (placeId: string) => {
+    const current = (selectedCard?.visit_count || 1);
+    if (current <= 1) return;
+    const nextCount = current - 1;
+    saveQuestEdit(placeId, { visit_count: nextCount });
+    setMockPlaces(prev => prev.map(p => {
+      if (p.id === placeId) {
+        return { ...p, visit_count: nextCount };
+      }
+      return p;
+    }));
+    setSelectedCard((prev: any) => {
+      if (prev && prev.id === placeId) {
+        return { ...prev, visit_count: nextCount };
+      }
+      return prev;
+    });
   };
 
   const handleEditToggle = (placeId: string) => {
     if (isEditing) {
-      // Save changes
-      setMockPlaces(prev => prev.map(p => p.id === placeId ? { ...p, notes: editNotes } : p));
-      setSelectedCard((prev: any) => prev ? { ...prev, notes: editNotes } : prev);
-      
-      const localQuests = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
-      const updatedLocal = localQuests.map((q: any) => q.id === placeId ? { ...q, notes: editNotes } : q);
-      localStorage.setItem("sq_custom_quests", JSON.stringify(updatedLocal));
-      
+      saveQuestNotes(placeId, editNotes);
       setIsEditing(false);
     } else {
-      setEditNotes(selectedCard.notes || selectedCard.visits?.[0]?.notes || "");
+      const edits = getQuestEdits();
+      const currentNotes = edits[placeId]?.notes ?? selectedCard?.notes ?? selectedCard?.visits?.[0]?.notes ?? "";
+      setEditNotes(currentNotes);
       setIsEditing(true);
     }
-  };;
+  };
+
+  const handleToggleWouldReturn = (placeId: string) => {
+    const current = selectedCard?.would_return;
+    const nextVal = current === true ? false : current === false ? null : true;
+    saveQuestEdit(placeId, { would_return: nextVal });
+    setMockPlaces(prev => prev.map(p => {
+      if (p.id === placeId) {
+        return { ...p, would_return: nextVal };
+      }
+      return p;
+    }));
+    setSelectedCard((prev: any) => {
+      if (prev && prev.id === placeId) {
+        return { ...prev, would_return: nextVal };
+      }
+      return prev;
+    });
+  };
+
+  const handleCloseModal = () => {
+    if (isEditing && selectedCard) {
+      saveQuestNotes(selectedCard.id, editNotes);
+      setIsEditing(false);
+    }
+    setSelectedCard(null);
+  };
 
   const handleDeleteQuest = (placeId: string) => {
     setMockPlaces(prev => prev.filter(p => p.id !== placeId));
@@ -213,21 +302,20 @@ export default function QuestsPage() {
   };
 
   const handleToggleLike = (placeId: string) => {
+    const nextFav = !selectedCard?.favorite;
+    saveQuestEdit(placeId, { favorite: nextFav });
     setMockPlaces(prev => {
       const newPlaces = prev.map(p => {
         if (p.id === placeId) {
-          return { ...p, favorite: !p.favorite };
+          return { ...p, favorite: nextFav };
         }
         return p;
       });
-      const localQuests = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
-      const updatedLocal = localQuests.map((q: any) => q.id === placeId ? { ...q, favorite: !q.favorite } : q);
-      localStorage.setItem("sq_custom_quests", JSON.stringify(updatedLocal));
       return newPlaces;
     });
     setSelectedCard((prev: any) => {
       if (prev && prev.id === placeId) {
-        return { ...prev, favorite: !prev.favorite };
+        return { ...prev, favorite: nextFav };
       }
       return prev;
     });
@@ -366,9 +454,15 @@ export default function QuestsPage() {
 
       {/* Detail Modal Overlay (Restored Old Layout, popup style) */}
       {selectedCard && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-ink/80 p-2 md:p-6 animate-in fade-in">
+        <div 
+          onClick={handleCloseModal}
+          className="absolute inset-0 z-50 flex items-center justify-center bg-ink/80 p-2 md:p-6 animate-in fade-in cursor-pointer"
+        >
           
-          <div className="relative w-full max-w-sm md:max-w-md h-auto max-h-[85vh] md:max-h-[80vh] bg-cream flex flex-col font-pixel border-4 border-ink rounded-3xl shadow-[8px_8px_0_rgba(38,52,58,1)] overflow-hidden animate-in zoom-in-95">
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm md:max-w-md h-auto max-h-[85vh] md:max-h-[80vh] bg-cream flex flex-col font-pixel border-4 border-ink rounded-3xl shadow-[8px_8px_0_rgba(38,52,58,1)] overflow-hidden animate-in zoom-in-95 cursor-default"
+          >
              
              {/* Storefront Banner */}
              <div className="w-full h-20 md:h-24 bg-brick-red shrink-0 relative border-b-4 border-ink flex items-end">
@@ -388,7 +482,7 @@ export default function QuestsPage() {
                        <Heart className={`w-5 h-5 mb-1 shrink-0 ${selectedCard.favorite ? "fill-mustard text-mustard drop-shadow-[2px_2px_0_rgba(38,52,58,1)]" : "text-cream"}`} />
                      </button>
                      <button 
-                       onClick={() => setSelectedCard(null)}
+                       onClick={handleCloseModal}
                        className="bg-white-city shrink-0 mb-0.5 p-1 rounded-lg border-2 border-ink text-ink flex items-center justify-center hover:bg-concrete shadow-[2px_2px_0_rgba(38,52,58,1)] active:translate-y-1 active:shadow-none transition-all"
                      >
                        <X className="w-5 h-5" strokeWidth={3} />
@@ -434,30 +528,98 @@ export default function QuestsPage() {
 
                 {/* Journal Notes */}
                 <div className="bg-white-city border-4 border-ink p-4 rounded-2xl shadow-[4px_4px_0_rgba(38,52,58,1)] relative mt-2 mb-4">
-                   <div className="absolute -top-3 left-2 bg-mustard text-ink text-[0.55rem] font-bold px-2 py-1 border-2 border-ink rounded-md">
-                     FOOD TRIED & NOTES
-                   </div>
-                   <div className="mt-2 text-xs font-bold leading-relaxed text-ink whitespace-pre-wrap">
+                   <div className="flex justify-between items-center -mt-1 mb-2">
+                     <span className="bg-mustard text-ink text-[0.55rem] font-bold px-2 py-0.5 border-2 border-ink rounded-md uppercase">
+                       FOOD TRIED & NOTES
+                     </span>
                      {isEditing ? (
-                       <textarea 
-                         value={editNotes} 
-                         onChange={e => setEditNotes(e.target.value)} 
-                         className="w-full bg-cream border-2 border-ink p-2 outline-none custom-scrollbar text-xs font-bold" 
-                         rows={4}
-                       />
+                       <button
+                         type="button"
+                         onClick={() => {
+                           saveQuestNotes(selectedCard.id, editNotes);
+                           setIsEditing(false);
+                         }}
+                         className="bg-deep-green text-white-city text-[0.55rem] font-bold px-2.5 py-0.5 border-2 border-ink rounded-md flex items-center gap-1 shadow-[1px_1px_0_rgba(38,52,58,1)] active:translate-y-0.5 hover:brightness-110"
+                       >
+                         <Check className="w-3 h-3" /> SAVE NOTES
+                       </button>
                      ) : (
-                       selectedCard.notes || selectedCard.visits?.[0]?.notes || "No notes yet!"
+                       <button
+                         type="button"
+                         onClick={() => {
+                           setEditNotes(selectedCard.notes || selectedCard.visits?.[0]?.notes || "");
+                           setIsEditing(true);
+                         }}
+                         className="bg-white-city hover:bg-sand text-ink text-[0.55rem] font-bold px-2 py-0.5 border-2 border-ink rounded-md flex items-center gap-1 shadow-[1px_1px_0_rgba(38,52,58,1)] active:translate-y-0.5"
+                       >
+                         <Edit2 className="w-3 h-3 text-asphalt" /> EDIT
+                       </button>
                      )}
                    </div>
-                   <div className="mt-4 pt-3 border-t-2 border-dashed border-ink flex items-center gap-2">
-                     <span className="text-[0.6rem] font-bold text-asphalt">WOULD RETURN?</span>
-                     {selectedCard.would_return === true ? (
-                       <span className="bg-leaf-green text-white-city text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">YES</span>
-                     ) : selectedCard.would_return === false ? (
-                       <span className="bg-warm-red text-white-city text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">NO</span>
+
+                   <div className="mt-1 text-xs font-bold leading-relaxed text-ink whitespace-pre-wrap">
+                     {isEditing ? (
+                       <div className="flex flex-col gap-2">
+                         <textarea 
+                           value={editNotes} 
+                           onChange={e => setEditNotes(e.target.value)} 
+                           placeholder="Type dishes tried, notes, recommendations..."
+                           className="w-full bg-cream border-2 border-ink p-2 outline-none custom-scrollbar text-xs font-bold rounded-md" 
+                           rows={4}
+                           autoFocus
+                         />
+                         <button
+                           type="button"
+                           onClick={() => {
+                             saveQuestNotes(selectedCard.id, editNotes);
+                             setIsEditing(false);
+                           }}
+                           className="w-full bg-mustard hover:brightness-105 text-ink text-[0.65rem] font-bold py-1.5 border-2 border-ink rounded-md flex items-center justify-center gap-1.5 shadow-[2px_2px_0_rgba(38,52,58,1)] active:translate-y-0.5"
+                         >
+                           <Check className="w-3.5 h-3.5" /> SAVE FOOD TRIED & NOTES
+                         </button>
+                       </div>
                      ) : (
-                       <span className="bg-concrete text-ink text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)]">UNDECIDED</span>
+                       <div
+                         onClick={() => {
+                           setEditNotes(selectedCard.notes || selectedCard.visits?.[0]?.notes || "");
+                           setIsEditing(true);
+                         }}
+                         className="cursor-pointer hover:bg-sand/30 p-1.5 rounded transition-colors min-h-[3rem]"
+                         title="Click to edit notes"
+                       >
+                         {selectedCard.notes || selectedCard.visits?.[0]?.notes || (
+                           <span className="text-asphalt/60 italic font-medium">Click here to add dishes tried and notes...</span>
+                         )}
+                       </div>
                      )}
+                   </div>
+
+                   <div className="mt-4 pt-3 border-t-2 border-dashed border-ink flex items-center justify-between">
+                     <span className="text-[0.6rem] font-bold text-asphalt">WOULD RETURN?</span>
+                     <div className="flex items-center gap-1">
+                       <button
+                         type="button"
+                         onClick={() => handleToggleWouldReturn(selectedCard.id)}
+                         className="focus:outline-none"
+                         title="Click to toggle would return"
+                       >
+                         {selectedCard.would_return === true ? (
+                           <span className="bg-leaf-green hover:brightness-105 text-white-city text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)] cursor-pointer inline-flex items-center gap-1">
+                             <Check className="w-3 h-3" /> YES
+                           </span>
+                         ) : selectedCard.would_return === false ? (
+                           <span className="bg-warm-red hover:brightness-105 text-white-city text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)] cursor-pointer inline-flex items-center gap-1">
+                             <X className="w-3 h-3" /> NO
+                           </span>
+                         ) : (
+                           <span className="bg-concrete hover:bg-sand text-ink text-[0.6rem] font-bold px-2 py-0.5 rounded-md border border-ink shadow-[1px_1px_0_rgba(38,52,58,1)] cursor-pointer">
+                             UNDECIDED
+                           </span>
+                         )}
+                       </button>
+                       <span className="text-[0.5rem] text-asphalt font-bold ml-1">(tap to toggle)</span>
+                     </div>
                    </div>
                 </div>
 

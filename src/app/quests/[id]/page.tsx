@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Heart, MapPin, Calendar, ArrowLeft, Plus, CheckCircle, Search } from "lucide-react";
+import { Heart, MapPin, Calendar, ArrowLeft, Plus, CheckCircle, Search, Edit2, Check, Sparkles } from "lucide-react";
 import Link from "next/link";
 import realPlaces from "@/data/places.json";
 import ActionButtons from "@/components/ActionButtons";
 import CreateFoodCardModal from "@/components/CreateFoodCardModal";
 import { FoodCardData, getStoredFoodCards, getCategoryIcon, isPlaceMatch } from "@/lib/pixelate";
-import { Sparkles } from "lucide-react";
+import { getQuestEdits, saveQuestEdit } from "@/lib/sync";
 
 export default function RestaurantDetail() {
   const router = useRouter();
@@ -19,6 +19,8 @@ export default function RestaurantDetail() {
   const [loading, setLoading] = useState(true);
   const [foodCards, setFoodCards] = useState<FoodCardData[]>([]);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editNotes, setEditNotes] = useState("");
 
   useEffect(() => {
     setFoodCards(getStoredFoodCards());
@@ -33,8 +35,11 @@ export default function RestaurantDetail() {
     };
   }, []);
 
-  useEffect(() => {
+  const loadPlaceData = () => {
     try {
+      const edits = getQuestEdits();
+      const edit = edits[idStr];
+
       // 1. Try finding in custom quests first
       const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
       const foundCustom = saved.find((p: any) => String(p.id) === String(idStr));
@@ -42,7 +47,10 @@ export default function RestaurantDetail() {
         let baseScore = foundCustom.rating || 0;
         if (baseScore <= 5 && baseScore > 0) baseScore = baseScore * 2;
         const finalScore = baseScore ? Math.round(baseScore * 10) : 80;
-        
+        const notes = edit?.notes !== undefined ? edit.notes : (foundCustom.notes || `Our visit to ${foundCustom.name}.`);
+        const would_return = edit?.would_return !== undefined ? edit.would_return : (foundCustom.would_return ?? true);
+        const favorite = edit?.favorite !== undefined ? edit.favorite : !!foundCustom.favorite;
+
         setPlace({
           id: foundCustom.id,
           name: foundCustom.name,
@@ -50,7 +58,7 @@ export default function RestaurantDetail() {
           neighborhood: foundCustom.neighborhood || "City Center",
           address: "Sunday Route",
           category: foundCustom.category || "Restaurant",
-          favorite: !!foundCustom.favorite,
+          favorite,
           price: "$".repeat(foundCustom.price_level || 2),
           tags: foundCustom.tags && foundCustom.tags.length > 0 
             ? foundCustom.tags 
@@ -63,11 +71,12 @@ export default function RestaurantDetail() {
               taste_score: Math.round((foundCustom.custom_ratings?.taste || 7.5) * 10),
               vibe_score: Math.round((foundCustom.custom_ratings?.vibe || 7.5) * 10),
               value_score: Math.round((foundCustom.custom_ratings?.portn || 7.5) * 10),
-              notes: foundCustom.notes || `Our visit to ${foundCustom.name}.`,
-              would_return: foundCustom.would_return ?? true
+              notes,
+              would_return
             }
           ]
         });
+        setEditNotes(notes);
         setLoading(false);
         return;
       }
@@ -78,6 +87,9 @@ export default function RestaurantDetail() {
         let baseScore = foundReal.rating || 4.5;
         if (baseScore <= 5) baseScore = baseScore * 2;
         const finalScore = Math.round(baseScore * 10);
+        const notes = edit?.notes !== undefined ? edit.notes : (foundReal.notes || `Our trip to ${foundReal.name}. The vibes were great and the food was delicious!`);
+        const would_return = edit?.would_return !== undefined ? edit.would_return : true;
+        const favorite = edit?.favorite !== undefined ? edit.favorite : !!foundReal.favorite;
 
         setPlace({
           id: foundReal.id,
@@ -86,7 +98,7 @@ export default function RestaurantDetail() {
           neighborhood: foundReal.neighborhood,
           address: "Sunday Route",
           category: foundReal.category,
-          favorite: !!foundReal.favorite,
+          favorite,
           price: foundReal.price || "$$",
           tags: ["Sunday Ritual", "Good Vibes", "Memories"],
           visits: [
@@ -97,11 +109,12 @@ export default function RestaurantDetail() {
               taste_score: 90,
               vibe_score: 85,
               value_score: 80,
-              notes: `Our trip to ${foundReal.name}. The vibes were great and the food was delicious!`,
-              would_return: true
+              notes,
+              would_return
             }
           ]
         });
+        setEditNotes(notes);
         setLoading(false);
         return;
       }
@@ -109,7 +122,27 @@ export default function RestaurantDetail() {
       console.error(e);
     }
     setLoading(false);
+  };
+
+  useEffect(() => {
+    loadPlaceData();
+    window.addEventListener("storage", loadPlaceData);
+    window.addEventListener("sq_quests_updated", loadPlaceData);
+    return () => {
+      window.removeEventListener("storage", loadPlaceData);
+      window.removeEventListener("sq_quests_updated", loadPlaceData);
+    };
   }, [idStr]);
+
+  const handleSaveNotes = () => {
+    saveQuestEdit(idStr, { notes: editNotes });
+    setPlace((prev: any) => ({
+      ...prev,
+      notes: editNotes,
+      visits: [{ ...prev.visits[0], notes: editNotes }]
+    }));
+    setIsEditingNotes(false);
+  };
 
   const handleDelete = () => {
     try {
@@ -132,11 +165,7 @@ export default function RestaurantDetail() {
     if (!place) return;
     const nextFav = !place.favorite;
     setPlace((prev: any) => ({ ...prev, favorite: nextFav }));
-    try {
-      const saved = JSON.parse(localStorage.getItem("sq_custom_quests") || "[]");
-      const updated = saved.map((p: any) => String(p.id) === String(idStr) ? { ...p, favorite: nextFav } : p);
-      localStorage.setItem("sq_custom_quests", JSON.stringify(updated));
-    } catch (e) {}
+    saveQuestEdit(idStr, { favorite: nextFav });
   };
 
   if (loading) {
@@ -285,17 +314,96 @@ export default function RestaurantDetail() {
 
         {/* Journal Notes */}
         <div className="bg-mustard border-4 border-ink p-4 rounded-sm shadow-[4px_4px_0_rgba(38,52,58,1)] relative">
-          <div className="absolute -top-3 left-2 bg-ink text-white-city text-[0.55rem] font-bold px-2 py-1 border-2 border-ink">
-            PERSONAL NOTES
+          <div className="flex justify-between items-center -mt-1 mb-2">
+            <span className="bg-ink text-white-city text-[0.55rem] font-bold px-2 py-0.5 border-2 border-ink uppercase">
+              FOOD TRIED & NOTES
+            </span>
+            {isEditingNotes ? (
+              <button
+                type="button"
+                onClick={handleSaveNotes}
+                className="bg-deep-green text-white-city text-[0.55rem] font-bold px-2.5 py-0.5 border-2 border-ink rounded-sm flex items-center gap-1 shadow-[1px_1px_0_rgba(38,52,58,1)] active:translate-y-0.5"
+              >
+                <Check className="w-3 h-3" /> SAVE NOTES
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditNotes(latestVisit.notes || "");
+                  setIsEditingNotes(true);
+                }}
+                className="bg-white-city hover:bg-sand text-ink text-[0.55rem] font-bold px-2 py-0.5 border-2 border-ink rounded-sm flex items-center gap-1 shadow-[1px_1px_0_rgba(38,52,58,1)] active:translate-y-0.5"
+              >
+                <Edit2 className="w-3 h-3" /> EDIT
+              </button>
+            )}
           </div>
-          <p className="text-[0.6rem] md:text-xs leading-relaxed text-ink font-bold mt-2">
-            "{latestVisit.notes}"
-          </p>
-          {latestVisit.would_return && (
-            <div className="mt-4 flex items-center gap-1 text-leaf-green font-bold text-[0.6rem] bg-white-city border-2 border-ink inline-flex px-2 py-1">
-              <CheckCircle className="w-3 h-3" /> WOULD RETURN
+
+          {isEditingNotes ? (
+            <div className="flex flex-col gap-2 mt-2">
+              <textarea
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Type dishes tried, notes, recommendations..."
+                className="w-full bg-cream border-2 border-ink p-2 outline-none text-xs font-bold rounded-sm custom-scrollbar"
+                rows={4}
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={handleSaveNotes}
+                className="w-full bg-deep-green text-white-city py-2 text-[0.65rem] font-bold border-2 border-ink flex items-center justify-center gap-1 shadow-[2px_2px_0_rgba(38,52,58,1)] active:translate-y-0.5"
+              >
+                <Check className="w-3.5 h-3.5" /> SAVE FOOD TRIED & NOTES
+              </button>
+            </div>
+          ) : (
+            <div
+              onClick={() => {
+                setEditNotes(latestVisit.notes || "");
+                setIsEditingNotes(true);
+              }}
+              className="cursor-pointer hover:bg-white-city/20 p-1 rounded transition-colors"
+              title="Click to edit notes"
+            >
+              <p className="text-[0.6rem] md:text-xs leading-relaxed text-ink font-bold whitespace-pre-wrap">
+                "{latestVisit.notes || "No notes yet. Click to add dishes tried and notes!"}"
+              </p>
             </div>
           )}
+
+          <div className="mt-4 flex items-center justify-between border-t-2 border-dashed border-ink/40 pt-2">
+            <span className="text-[0.6rem] font-bold text-ink/80">WOULD RETURN?</span>
+            <button
+              type="button"
+              onClick={() => {
+                const nextVal = latestVisit.would_return === true ? false : latestVisit.would_return === false ? null : true;
+                saveQuestEdit(idStr, { would_return: nextVal });
+                setPlace((prev: any) => ({
+                  ...prev,
+                  would_return: nextVal,
+                  visits: [{ ...prev.visits[0], would_return: nextVal }]
+                }));
+              }}
+              className="cursor-pointer"
+              title="Click to toggle"
+            >
+              {latestVisit.would_return === true ? (
+                <span className="bg-leaf-green text-white-city font-bold text-[0.6rem] border-2 border-ink inline-flex items-center gap-1 px-2 py-0.5 shadow-[1px_1px_0_rgba(38,52,58,1)]">
+                  <CheckCircle className="w-3 h-3" /> YES
+                </span>
+              ) : latestVisit.would_return === false ? (
+                <span className="bg-warm-red text-white-city font-bold text-[0.6rem] border-2 border-ink inline-flex items-center gap-1 px-2 py-0.5 shadow-[1px_1px_0_rgba(38,52,58,1)]">
+                  <CheckCircle className="w-3 h-3" /> NO
+                </span>
+              ) : (
+                <span className="bg-concrete text-ink font-bold text-[0.6rem] border-2 border-ink inline-flex items-center gap-1 px-2 py-0.5 shadow-[1px_1px_0_rgba(38,52,58,1)]">
+                  UNDECIDED
+                </span>
+              )}
+            </button>
+          </div>
         </div>
         {/* Food Cards for this restaurant */}
         {(() => {
@@ -361,7 +469,18 @@ export default function RestaurantDetail() {
         })()}
       </div>
 
-      <ActionButtons placeName={place.name} onDelete={handleDelete} />
+      <ActionButtons
+        placeName={place.name}
+        onDelete={handleDelete}
+        onEdit={() => {
+          if (isEditingNotes) {
+            handleSaveNotes();
+          } else {
+            setIsEditingNotes(true);
+          }
+        }}
+        isEditing={isEditingNotes}
+      />
 
       {/* Create Food Card Modal */}
       <CreateFoodCardModal
